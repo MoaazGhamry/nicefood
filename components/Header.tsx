@@ -20,7 +20,7 @@ export default function Header() {
     return false;
   };
 
-  const whatsappNumber = '201019000000';
+  const whatsappNumber = '201558580214';
   const whatsappMessage = encodeURIComponent(
     locale === 'ar'
       ? 'مرحباً، أود الاستفسار عن منتجات وتوريدات مجموعة نايس فود'

@@ -88,6 +88,7 @@ export default function AdminDashboardPage() {
   const [newImage, setNewImage] = useState('');
   const [savingProduct, setSavingProduct] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [orderFilter, setOrderFilter] = useState<'all' | 'pending' | 'preparing' | 'cancelled'>('all');
 
   // Check secret session on mount
   useEffect(() => {
@@ -265,16 +266,61 @@ export default function AdminDashboardPage() {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderStatus: newStatus }),
+        body: JSON.stringify({
+          orderStatus: newStatus,
+          ...(newStatus === 'cancelled' && { paymentStatus: 'failed' }),
+        }),
       });
       if (res.ok) {
         setOrders((prev) =>
-          prev.map((o) => (o.id === orderId ? { ...o, orderStatus: newStatus } : o))
+          prev.map((o) => (o.id === orderId ? { ...o, orderStatus: newStatus, ...(newStatus === 'cancelled' && { paymentStatus: 'failed' }) } : o))
         );
         showFeedback('تم تحديث حالة الطلب بنجاح');
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  // Direct Cancel Order
+  const handleCancelOrder = async (orderId: string) => {
+    if (!confirm('هل تريد بالتأكيد إلغاء هذا الطلب؟ سيتم تعيين حالته كملغي ومرفوض.')) return;
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderStatus: 'cancelled', paymentStatus: 'failed' }),
+      });
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, orderStatus: 'cancelled', paymentStatus: 'failed' } : o))
+        );
+        showFeedback('تم إلغاء الطلب بنجاح');
+      } else {
+        alert('حدث خطأ أثناء إلغاء الطلب');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('فشل الاتصال بالخادم لإلغاء الطلب');
+    }
+  };
+
+  // Permanent Delete Order
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm('تحذير: هل أنت متأكد من حذف هذا الطلب نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        showFeedback('تم حذف الطلب نهائياً بنجاح');
+      } else {
+        alert('فشل حذف الطلب');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('فشل الاتصال لحذف الطلب');
     }
   };
 
@@ -919,6 +965,76 @@ export default function AdminDashboardPage() {
         {/* ================= TAB 2: ORDERS ================= */}
         {activeTab === 'orders' && (
           <div>
+            {/* Orders Filter Toolbar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setOrderFilter('all')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: orderFilter === 'all' ? 'var(--nicefood-green)' : 'var(--bg-card)',
+                    color: orderFilter === 'all' ? '#fff' : 'var(--text-primary)',
+                    fontWeight: 600,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  الكل ({orders.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrderFilter('pending')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: orderFilter === 'pending' ? 'var(--nicefood-gold)' : 'var(--bg-card)',
+                    color: orderFilter === 'pending' ? '#fff' : 'var(--text-primary)',
+                    fontWeight: 600,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  قيد الانتظار ({orders.filter((o) => o.orderStatus === 'pending').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrderFilter('preparing')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: orderFilter === 'preparing' ? '#2563eb' : 'var(--bg-card)',
+                    color: orderFilter === 'preparing' ? '#fff' : 'var(--text-primary)',
+                    fontWeight: 600,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  المؤكدة / جاري التجهيز ({orders.filter((o) => o.orderStatus === 'preparing' || o.orderStatus === 'confirmed' || o.orderStatus === 'delivering').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrderFilter('cancelled')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: orderFilter === 'cancelled' ? '#dc2626' : 'var(--bg-card)',
+                    color: orderFilter === 'cancelled' ? '#fff' : 'var(--text-primary)',
+                    fontWeight: 600,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  الملغية والمرفوضة ({orders.filter((o) => o.orderStatus === 'cancelled').length})
+                </button>
+              </div>
+            </div>
+
             {orders.length === 0 ? (
               <div
                 style={{
@@ -954,111 +1070,172 @@ export default function AdminDashboardPage() {
                       <th style={{ padding: '12px 14px' }}>المنتجات</th>
                       <th style={{ padding: '12px 14px' }}>الإجمالي والدفع</th>
                       <th style={{ padding: '12px 14px' }}>حالة الطلب</th>
+                      <th style={{ padding: '12px 14px' }}>إجراءات الإلغاء والحذف</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map((ord) => {
-                      const mapsLink =
-                        ord.customerLat && ord.customerLng
-                          ? `https://www.google.com/maps?q=${ord.customerLat},${ord.customerLng}`
-                          : null;
+                    {orders
+                      .filter((ord) => {
+                        if (orderFilter === 'pending') return ord.orderStatus === 'pending';
+                        if (orderFilter === 'preparing')
+                          return (
+                            ord.orderStatus === 'preparing' ||
+                            ord.orderStatus === 'confirmed' ||
+                            ord.orderStatus === 'delivering'
+                          );
+                        if (orderFilter === 'cancelled') return ord.orderStatus === 'cancelled';
+                        return true;
+                      })
+                      .map((ord) => {
+                        const mapsLink =
+                          ord.customerLat && ord.customerLng
+                            ? `https://www.google.com/maps?q=${ord.customerLat},${ord.customerLng}`
+                            : null;
 
-                      return (
-                        <tr key={ord.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                              #{ord.id.slice(-6).toUpperCase()}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                              {new Date(ord.createdAt).toLocaleDateString('ar-EG', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </div>
-                          </td>
+                        return (
+                          <tr key={ord.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                            <td style={{ padding: '12px 14px' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                                #{ord.id.slice(-6).toUpperCase()}
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                {new Date(ord.createdAt).toLocaleDateString('ar-EG', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </div>
+                            </td>
 
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{ord.customerName}</div>
-                            <a
-                              href={`tel:${ord.customerPhone}`}
-                              style={{ fontSize: '0.78rem', color: 'var(--nicefood-green)', direction: 'ltr', display: 'inline-block', textDecoration: 'none' }}
-                            >
-                              {ord.customerPhone}
-                            </a>
-                          </td>
-
-                          <td style={{ padding: '12px 14px', maxWidth: '220px' }}>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                              {ord.customerAddress}
-                            </div>
-                            {mapsLink && (
+                            <td style={{ padding: '12px 14px' }}>
+                              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{ord.customerName}</div>
                               <a
-                                href={mapsLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href={`tel:${ord.customerPhone}`}
+                                style={{ fontSize: '0.78rem', color: 'var(--nicefood-green)', direction: 'ltr', display: 'inline-block', textDecoration: 'none' }}
+                              >
+                                {ord.customerPhone}
+                              </a>
+                            </td>
+
+                            <td style={{ padding: '12px 14px', maxWidth: '220px' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                                {ord.customerAddress}
+                              </div>
+                              {mapsLink && (
+                                <a
+                                  href={mapsLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    color: 'var(--nicefood-green)',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    marginTop: '2px',
+                                    textDecoration: 'none',
+                                  }}
+                                >
+                                  <span>عرض اللوكيشن على الخريطة ↗</span>
+                                </a>
+                              )}
+                            </td>
+
+                            <td style={{ padding: '12px 14px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                {ord.items.map((it) => (
+                                  <div key={it.id} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                                    • {it.product.nameAr} ({it.quantity} {it.product.unit})
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+
+                            <td style={{ padding: '12px 14px' }}>
+                              <div style={{ fontWeight: 800, color: 'var(--nicefood-gold)', fontSize: '0.95rem' }}>
+                                {ord.total} ج.م
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: ord.orderStatus === 'cancelled' ? '#dc2626' : 'var(--text-muted)' }}>
+                                {ord.paymentMethod === 'paymob_visa'
+                                  ? ord.paymentStatus === 'paid'
+                                    ? 'Paymob فيزا (مدفوع)'
+                                    : 'Paymob فيزا (ملغي/فشل)'
+                                  : ord.paymentMethod === 'wallet'
+                                  ? 'محفظة'
+                                  : 'كاش استلام'}
+                              </div>
+                            </td>
+
+                            <td style={{ padding: '12px 14px' }}>
+                              <select
+                                value={ord.orderStatus}
+                                onChange={(e) => handleOrderStatusChange(ord.id, e.target.value)}
                                 style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  color: 'var(--nicefood-green)',
-                                  fontSize: '0.74rem',
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  background: ord.orderStatus === 'cancelled' ? '#fef2f2' : 'var(--bg-secondary)',
+                                  border: ord.orderStatus === 'cancelled' ? '1px solid #fecaca' : '1px solid var(--border-color)',
+                                  color: ord.orderStatus === 'cancelled' ? '#b91c1c' : 'var(--text-primary)',
+                                  fontSize: '0.78rem',
                                   fontWeight: 600,
-                                  marginTop: '2px',
-                                  textDecoration: 'none',
                                 }}
                               >
-                                <span>عرض اللوكيشن على الخريطة ↗</span>
-                              </a>
-                            )}
-                          </td>
+                                <option value="pending">قيد الانتظار</option>
+                                <option value="preparing">جاري التجهيز بالمصنع</option>
+                                <option value="delivering">جاري التوصيل</option>
+                                <option value="delivered">تم التسليم</option>
+                                <option value="cancelled">ملغي</option>
+                              </select>
+                            </td>
 
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              {ord.items.map((it) => (
-                                <div key={it.id} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                                  • {it.product.nameAr} ({it.quantity} {it.product.unit})
-                                </div>
-                              ))}
-                            </div>
-                          </td>
-
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ fontWeight: 800, color: 'var(--nicefood-gold)', fontSize: '0.95rem' }}>
-                              {ord.total} ج.م
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                              {ord.paymentMethod === 'paymob_visa'
-                                ? 'Paymob فيزا (مدفوع)'
-                                : ord.paymentMethod === 'wallet'
-                                ? 'محفظة'
-                                : 'كاش استلام'}
-                            </div>
-                          </td>
-
-                          <td style={{ padding: '12px 14px' }}>
-                            <select
-                              value={ord.orderStatus}
-                              onChange={(e) => handleOrderStatusChange(ord.id, e.target.value)}
-                              style={{
-                                padding: '6px 10px',
-                                borderRadius: '6px',
-                                background: 'var(--bg-secondary)',
-                                border: '1px solid var(--border-color)',
-                                color: 'var(--text-primary)',
-                                fontSize: '0.78rem',
-                                fontWeight: 600,
-                              }}
-                            >
-                              <option value="pending">قيد الانتظار</option>
-                              <option value="preparing">جاري التجهيز بالمصنع</option>
-                              <option value="delivering">جاري التوصيل</option>
-                              <option value="delivered">تم التسليم</option>
-                              <option value="cancelled">ملغي</option>
-                            </select>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            {/* Direct Cancel and Delete Actions */}
+                            <td style={{ padding: '12px 14px' }}>
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                {ord.orderStatus !== 'cancelled' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCancelOrder(ord.id)}
+                                    title="إلغاء الطلب فوراً"
+                                    style={{
+                                      padding: '5px 10px',
+                                      borderRadius: '6px',
+                                      background: '#fee2e2',
+                                      border: '1px solid #fca5a5',
+                                      color: '#b91c1c',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    إلغاء
+                                  </button>
+                                ) : (
+                                  <span style={{ fontSize: '0.72rem', color: '#b91c1c', fontWeight: 600 }}>ملغي</span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteOrder(ord.id)}
+                                  title="حذف نهائي من قاعدة البيانات"
+                                  style={{
+                                    padding: '5px 8px',
+                                    borderRadius: '6px',
+                                    background: '#fff',
+                                    border: '1px solid #e2e8f0',
+                                    color: '#dc2626',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  حذف نهائي
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>

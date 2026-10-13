@@ -16,7 +16,7 @@ export default function BottomNav() {
   const isOffers = pathname.startsWith('/offers');
   const isCart = pathname.startsWith('/cart') || pathname.startsWith('/checkout');
 
-  const whatsappNumber = '201019000000';
+  const whatsappNumber = '201558580214';
   const whatsappMsg = encodeURIComponent(
     locale === 'ar'
       ? 'مرحباً، أود الاستفسار عن منتجات وتوريدات مجموعة نايس فود'

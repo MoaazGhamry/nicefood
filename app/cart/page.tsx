@@ -349,7 +349,7 @@ export default function CartPage() {
                 </Link>
 
                 <a
-                  href={`https://wa.me/201019000000?text=${whatsappOrderText}`}
+                  href={`https://wa.me/201558580214?text=${whatsappOrderText}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{

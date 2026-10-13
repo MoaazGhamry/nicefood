@@ -1,7 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import CancelOrderButton from '@/components/CancelOrderButton';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -25,6 +26,11 @@ export default async function OrderSuccessPage({ params }: PageProps) {
 
   if (!order) {
     notFound();
+  }
+
+  // If order was cancelled or payment failed, display failure page immediately
+  if (order.orderStatus === 'cancelled' || order.paymentStatus === 'failed') {
+    redirect(`/payment/failed?orderId=${order.id}`);
   }
 
   // Google Maps URL if GPS coordinates exist
@@ -233,7 +239,7 @@ export default async function OrderSuccessPage({ params }: PageProps) {
           {/* Action Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <a
-              href={`https://wa.me/201019000000?text=${whatsappMsg}`}
+              href={`https://wa.me/201558580214?text=${whatsappMsg}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -272,6 +278,11 @@ export default async function OrderSuccessPage({ params }: PageProps) {
             >
               العودة للرئيسية وتسوق المزيد
             </Link>
+
+            {/* Cancel Order Option for customer */}
+            <div style={{ marginTop: '8px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
+              <CancelOrderButton orderId={order.id} currentStatus={order.orderStatus} />
+            </div>
           </div>
 
         </div>

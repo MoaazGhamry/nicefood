@@ -120,7 +120,7 @@ export default async function BrandPage({ params }: PageProps) {
           {/* Quick Actions */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <a
-              href={`https://wa.me/201019000000?text=${encodeURIComponent(`مرحباً، أود الاستفسار عن منتجات وتوريد علامة ${brand.nameAr}`)}`}
+              href={`https://wa.me/201558580214?text=${encodeURIComponent(`مرحباً، أود الاستفسار عن منتجات وتوريد علامة ${brand.nameAr}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{

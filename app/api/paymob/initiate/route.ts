@@ -91,16 +91,15 @@ export async function POST(req: Request) {
       },
     });
 
-    // If sandbox / immediate test, mark paid
-    if (paymobRes.isSandbox) {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          paymentStatus: 'paid',
-          paymobOrderId: paymobRes.token,
-        },
-      });
-    }
+    // Store payment token on order while keeping status pending
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        paymobOrderId: paymobRes.token,
+        paymentStatus: 'pending',
+        orderStatus: 'pending',
+      },
+    });
 
     return NextResponse.json({
       success: true,

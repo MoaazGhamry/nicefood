@@ -142,12 +142,13 @@ export default function CheckoutPage() {
         }
 
         const payData = await payRes.json();
-        clearCart();
+        // Do not clear cart yet: if customer cancels or card fails, their items remain saved
 
         // If Paymob returned an iframe URL redirect to it, otherwise to confirmation
         if (payData.paymentUrl) {
           window.location.href = payData.paymentUrl;
         } else {
+          clearCart();
           router.push(`/order-success/${payData.orderId}`);
         }
         return;

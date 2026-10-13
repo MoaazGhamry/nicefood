@@ -26,8 +26,18 @@ export async function GET(req: Request) {
     const isAuthentic = verifyPaymobHmac(paramsObj, hmac);
 
     if (!isAuthentic) {
-      console.warn('Paymob GET callback HMAC verification failed. Possible forgery attempt.');
-      return NextResponse.redirect(new URL('/checkout?error=security_verification_failed', req.url));
+      console.warn('Paymob GET callback HMAC verification failed.');
+      if (merchantOrderId) {
+        await prisma.order.update({
+          where: { id: merchantOrderId },
+          data: {
+            paymentStatus: 'failed',
+            orderStatus: 'cancelled',
+          },
+        }).catch(() => {});
+        return NextResponse.redirect(new URL(`/payment/failed?orderId=${merchantOrderId}`, req.url));
+      }
+      return NextResponse.redirect(new URL('/payment/failed', req.url));
     }
 
     if (merchantOrderId) {
@@ -47,10 +57,11 @@ export async function GET(req: Request) {
           where: { id: merchantOrderId },
           data: {
             paymentStatus: 'failed',
+            orderStatus: 'cancelled',
           },
         }).catch((err) => console.error('Error marking order failed:', err));
 
-        return NextResponse.redirect(new URL(`/checkout?error=payment_failed&order=${merchantOrderId}`, req.url));
+        return NextResponse.redirect(new URL(`/payment/failed?orderId=${merchantOrderId}`, req.url));
       }
     }
 
@@ -98,6 +109,7 @@ export async function POST(req: Request) {
           where: { id: merchantOrderId },
           data: {
             paymentStatus: 'failed',
+            orderStatus: 'cancelled',
           },
         });
       }

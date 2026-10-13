@@ -52,3 +52,16 @@ export async function PATCH(req: Request, { params }: RouteProps) {
     return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request, { params }: RouteProps) {
+  try {
+    const { id } = await params;
+    await prisma.order.delete({
+      where: { id },
+    });
+    return NextResponse.json({ success: true, message: 'Order deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    return NextResponse.json({ error: 'Failed to delete order' }, { status: 500 });
+  }
+}

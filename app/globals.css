@@ -2633,12 +2633,10 @@ body {
     left: 0;
     right: 0;
     height: calc(58px + env(safe-area-inset-bottom, 0px));
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid #e2e8f0;
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
     z-index: 999;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08) !important;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
@@ -2719,8 +2717,6 @@ body {
   .header {
     height: 60px !important;
     background: #ffffff !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06) !important;
   }
   .header__container {
