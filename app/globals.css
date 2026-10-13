@@ -35,21 +35,21 @@ html[data-theme="light"] {
   --offers-gold: #d97706;
   --offers-gold-glow: rgba(217, 119, 6, 0.16);
 
-  /* Liquid Glass & Neutral Colors - Light Mode */
+  /* Pure Luminous White Mode */
   --bg-primary: #F8FAFC;
-  --bg-secondary: #F1F4F9;
-  --bg-card: rgba(255, 255, 255, 0.82);
-  --bg-card-hover: rgba(255, 255, 255, 0.96);
-  --bg-glass: rgba(255, 255, 255, 0.82);
-  --bg-glass-hover: rgba(255, 255, 255, 0.96);
+  --bg-secondary: #F1F5F9;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #FFFFFF;
+  --bg-glass: rgba(255, 255, 255, 0.96);
+  --bg-glass-hover: #FFFFFF;
   
   --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-muted: #94A3B8;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
   
-  --border-color: rgba(226, 232, 240, 0.85);
-  --border-hover: rgba(203, 213, 225, 1);
-  --glass-specular: rgba(255, 255, 255, 0.95);
+  --border-color: #E2E8F0;
+  --border-hover: #CBD5E1;
+  --glass-specular: rgba(255, 255, 255, 1);
   
   /* Liquid Glass Shadows */
   --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
@@ -386,13 +386,13 @@ html[data-brand="offers"] {
   --aurora-color-5: rgba(251, 191, 36, 0.28); /* Radiant Sun Gold */
 }
 
-/* Soften for Light Mode */
+/* Clean & Luminous for White Mode */
 html[data-theme="light"] {
-  --aurora-mesh-opacity: 0.45;
-  --aurora-mesh-blur: 105px;
+  --aurora-mesh-opacity: 0.08;
+  --aurora-mesh-blur: 80px;
 }
 html[data-theme="dark"] {
-  --aurora-mesh-opacity: 0.95;
+  --aurora-mesh-opacity: 0.85;
   --aurora-mesh-blur: 85px;
 }
 
@@ -407,10 +407,18 @@ html[data-theme="dark"] {
     radial-gradient(ellipse 55% 50% at 75% 80%, var(--aurora-color-5) 0%, transparent 60%),
     radial-gradient(ellipse 40% 40% at 50% 50%, var(--aurora-color-3) 0%, transparent 60%);
   filter: blur(var(--aurora-mesh-blur, 85px));
-  opacity: var(--aurora-mesh-opacity, 0.95);
+  opacity: var(--aurora-mesh-opacity, 0.08);
   animation: liquidAuroraMorph 24s ease-in-out infinite alternate;
-  will-change: transform, filter;
-  transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+  transition: opacity 0.6s ease;
+}
+
+/* On mobile phones: Disable heavy blur filters for instant 60fps scrolling and crisp white look */
+@media (max-width: 860px) {
+  .liquid-aurora-mesh,
+  .liquid-brand-orb {
+    display: none !important;
+  }
 }
 
 @keyframes liquidAuroraMorph {
@@ -2212,6 +2220,18 @@ html[data-theme="light"] .product-card::after {
 }
 
 /* ==================== 2026 MOBILE FIRST & PERFORMANCE ENGINE ==================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-primary, #f8fafc) !important;
+  color: var(--text-primary, #0f172a);
+  font-family: var(--font-arabic), var(--font-sans), 'IBM Plex Sans Arabic', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
 
 /* Animation Keyframes */
 @keyframes fadeInUp {
