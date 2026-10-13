@@ -2530,6 +2530,10 @@ body {
     --header-height: 60px;
   }
 
+  body {
+    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
   /* 2-Column High-Density Product Grid on Mobile Phones */
   .products-grid {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -2714,6 +2718,10 @@ body {
   /* Compact Header on Mobile */
   .header {
     height: 60px !important;
+    background: #ffffff !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06) !important;
   }
   .header__container {
     padding: 0 14px !important;
