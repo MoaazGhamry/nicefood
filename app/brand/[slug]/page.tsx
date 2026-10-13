@@ -223,13 +223,7 @@ export default async function BrandPage({ params }: PageProps) {
             </Link>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '20px',
-            }}
-          >
+          <div className="products-grid">
             {brand.products.map((prod) => (
               <ProductCard
                 key={prod.id}

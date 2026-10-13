@@ -16,17 +16,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
 
   useEffect(() => {
-    // Check saved theme or system preference
+    // Check saved theme or default ALWAYS to crisp white light mode
     const saved = localStorage.getItem('nicefood-theme') as Theme | null;
     if (saved && (saved === 'light' || saved === 'dark')) {
       setThemeState(saved);
       document.documentElement.setAttribute('data-theme', saved);
     } else {
-      // Default to light for clean corporate feel, or match preference
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initial = prefersDark ? 'dark' : 'light';
-      setThemeState(initial);
-      document.documentElement.setAttribute('data-theme', initial);
+      // User explicitly requested: default is ALWAYS white mode
+      setThemeState('light');
+      document.documentElement.setAttribute('data-theme', 'light');
     }
   }, []);
 

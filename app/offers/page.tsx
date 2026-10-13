@@ -176,13 +176,7 @@ export default async function OffersPage() {
             </Link>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '20px',
-            }}
-          >
+          <div className="products-grid">
             {offerProducts.map((prod) => (
               <ProductCard
                 key={prod.id}

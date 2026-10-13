@@ -257,13 +257,7 @@ export default async function HomePage() {
         </div>
 
         {/* 4 Cards Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '20px',
-          }}
-        >
+        <div className="brand-hub-grid">
           {mainCards.map((card) => (
             <Link
               key={card.id}
@@ -463,13 +457,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '20px',
-            }}
-          >
+          <div className="products-grid">
             {products.map((prod) => (
               <ProductCard
                 key={prod.id}
