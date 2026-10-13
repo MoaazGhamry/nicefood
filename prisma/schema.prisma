@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("admin") // "superadmin" | "admin"
+  brandId   String?
+  brand     Brand?   @relation(fields: [brandId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Brand {
+  id          String    @id @default(cuid())
+  name        String
+  nameAr      String
+  slug        String    @unique
+  description String?
+  descriptionAr String?
+  logo        String?
+  color       String    @default("#1B5E20")
+  isActive    Boolean   @default(true)
+  products    Product[]
+  admins      User[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  nameAr      String
+  description String?
+  descriptionAr String?
+  price       Float
+  offerPrice  Float?
+  image       String?
+  category    String      @default("general")
+  categoryAr  String?
+  brandId     String
+  brand       Brand       @relation(fields: [brandId], references: [id])
+  isActive    Boolean     @default(true)
+  isOffer     Boolean     @default(false)
+  unit        String      @default("kg") // kg, piece, pack
+  minOrder    Int         @default(1)
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  customerName    String
+  customerPhone   String
+  customerAddress String
+  customerLat     Float?
+  customerLng     Float?
+  paymentMethod   String      @default("cash") // "cash" | "visa"
+  paymentStatus   String      @default("pending") // "pending" | "paid" | "failed"
+  orderStatus     String      @default("pending") // "pending" | "confirmed" | "preparing" | "delivering" | "delivered" | "cancelled"
+  deliveryTime    String?
+  total           Float
+  notes           String?
+  paymobOrderId   String?
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  total     Float
+}
