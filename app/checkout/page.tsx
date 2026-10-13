@@ -44,7 +44,23 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const deliveryFee = total > 500 || total === 0 ? 0 : 35;
+  const [feeConfig, setFeeConfig] = useState({ fee: 35, threshold: 500 });
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data.settings) {
+          setFeeConfig({
+            fee: data.settings.deliveryFee ?? 35,
+            threshold: data.settings.freeDeliveryThreshold ?? 500,
+          });
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const deliveryFee = total >= feeConfig.threshold || total === 0 ? 0 : feeConfig.fee;
   const grandTotal = total + deliveryFee;
 
   // If user backed out or returned from Paymob without finishing payment -> cancel order immediately!

@@ -67,13 +67,20 @@ export default function AdminDashboardPage() {
   const [authError, setAuthError] = useState('');
   const [authChecking, setAuthChecking] = useState(true);
 
-  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'settings'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterBrand, setFilterBrand] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Delivery & Store Settings State
+  const [deliveryFee, setDeliveryFee] = useState<number>(35);
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number>(500);
+  const [tempFeeInput, setTempFeeInput] = useState<string>('35');
+  const [tempThreshInput, setTempThreshInput] = useState<string>('500');
+  const [savingSettings, setSavingSettings] = useState(false);
 
   // Add Product Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -137,21 +144,32 @@ export default function AdminDashboardPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [prodRes, brandsRes, ordersRes] = await Promise.all([
+      const [prodRes, brandsRes, ordersRes, settingsRes] = await Promise.all([
         fetch('/api/products'),
         fetch('/api/brands'),
         fetch('/api/orders'),
+        fetch('/api/settings'),
       ]);
 
-      const [prodsData, brandsData, ordersData] = await Promise.all([
+      const [prodsData, brandsData, ordersData, settingsData] = await Promise.all([
         prodRes.json(),
         brandsRes.json(),
         ordersRes.json(),
+        settingsRes.json(),
       ]);
 
       setProducts(Array.isArray(prodsData) ? prodsData : []);
       setBrands(Array.isArray(brandsData) ? brandsData : []);
       setOrders(Array.isArray(ordersData) ? ordersData : []);
+
+      if (settingsData?.settings) {
+        const fee = settingsData.settings.deliveryFee ?? 35;
+        const thresh = settingsData.settings.freeDeliveryThreshold ?? 500;
+        setDeliveryFee(fee);
+        setFreeDeliveryThreshold(thresh);
+        setTempFeeInput(String(fee));
+        setTempThreshInput(String(thresh));
+      }
 
       if (brandsData.length > 0 && !newBrandId) {
         setNewBrandId(brandsData[0].id);
@@ -160,6 +178,38 @@ export default function AdminDashboardPage() {
       console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Save Delivery & Store Settings
+  const handleSaveDeliverySettings = async (feeToSave: number, thresholdToSave: number) => {
+    setSavingSettings(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deliveryFee: feeToSave,
+          freeDeliveryThreshold: thresholdToSave,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const updatedFee = data.settings.deliveryFee;
+        const updatedThresh = data.settings.freeDeliveryThreshold;
+        setDeliveryFee(updatedFee);
+        setFreeDeliveryThreshold(updatedThresh);
+        setTempFeeInput(String(updatedFee));
+        setTempThreshInput(String(updatedThresh));
+        showFeedback(`تم تحديث سعر التوصيل إلى ${updatedFee} ج.م بنجاح!`);
+      } else {
+        alert('حدث خطأ أثناء حفظ الإعدادات');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ أثناء الاتصال بالخادم');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -705,7 +755,7 @@ export default function AdminDashboardPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '14px',
             marginBottom: '24px',
           }}
@@ -733,10 +783,43 @@ export default function AdminDashboardPage() {
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '4px' }}>إجمالي الطلبات الواردة</div>
             <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)' }}>{orders.length}</div>
           </div>
+
+          {/* Delivery Fee Quick Card */}
+          <div style={{ background: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--radius-md, 12px)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>سعر التوصيل الحالي</span>
+                <span style={{ fontSize: '1rem' }}>🛵</span>
+              </div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#16a34a' }}>
+                {deliveryFee} <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>ج.م</span>
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                مجاني فوق {freeDeliveryThreshold} ج.م
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('settings')}
+              style={{
+                marginTop: '8px',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                border: '1px solid var(--nicefood-green)',
+                background: 'rgba(27, 94, 32, 0.08)',
+                color: 'var(--nicefood-green)',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              تعديل سعر التوصيل ⚙️
+            </button>
+          </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)', marginBottom: '20px', flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={() => setActiveTab('products')}
@@ -779,6 +862,25 @@ export default function AdminDashboardPage() {
             <span style={{ background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '8px', fontSize: '0.75rem' }}>
               {orders.length}
             </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('settings')}
+            style={{
+              padding: '10px 18px',
+              background: 'transparent',
+              color: activeTab === 'settings' ? 'var(--text-primary)' : 'var(--text-muted)',
+              fontWeight: 700,
+              fontSize: '0.92rem',
+              borderBottom: `2.5px solid ${activeTab === 'settings' ? 'var(--nicefood-green)' : 'transparent'}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            <span>إعدادات التوصيل والمتجر ⚙️</span>
           </button>
         </div>
 
@@ -1386,6 +1488,230 @@ export default function AdminDashboardPage() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ================= TAB 3: STORE & DELIVERY SETTINGS ================= */}
+        {activeTab === 'settings' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Header info */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--radius-md, 14px)',
+                border: '1px solid var(--border-color)',
+                padding: '24px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '1.6rem' }}>🛵</span>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                  إعدادات تكلفة التوصيل ومصاريف الشحن
+                </h2>
+              </div>
+              <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
+                يمكنك من هنا تعديل وتحديد سعر التوصيل الثابت الذي يظهر للعملاء في عربة التسوق وصفحة إتمام الطلب (Checkout)، وتحديد الحد الأدنى لقيمة السلة التي يُمنح عندها العميل توصيل مجاني تلقائياً.
+              </p>
+            </div>
+
+            {/* Settings Form Card */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--radius-md, 14px)',
+                border: '1px solid var(--border-color)',
+                padding: '24px',
+              }}
+            >
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const fee = parseFloat(tempFeeInput) || 0;
+                  const thresh = parseFloat(tempThreshInput) || 0;
+                  handleSaveDeliverySettings(fee, thresh);
+                }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+              >
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+                  {/* Delivery Fee Input */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                      💵 سعر التوصيل الثابت (بالجنيه المصري):
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        required
+                        value={tempFeeInput}
+                        onChange={(e) => setTempFeeInput(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-primary)',
+                          fontSize: '1.1rem',
+                          fontWeight: 700,
+                          outline: 'none',
+                        }}
+                      />
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                        ج.م
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '6px' }}>
+                      السعر الحالي المطبق: <strong style={{ color: '#16a34a' }}>{deliveryFee} ج.م</strong>
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+                      {[0, 25, 30, 35, 40, 50].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setTempFeeInput(String(preset))}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            border: tempFeeInput === String(preset) ? '1px solid #16a34a' : '1px solid var(--border-color)',
+                            background: tempFeeInput === String(preset) ? 'rgba(22, 163, 74, 0.1)' : 'var(--bg-secondary)',
+                            color: tempFeeInput === String(preset) ? '#16a34a' : 'var(--text-secondary)',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {preset === 0 ? 'توصيل مجاني (0 ج.م)' : `${preset} ج.م`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Free Delivery Threshold Input */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                      🎁 الحد الأدنى للشحن المجاني (بالجنيه المصري):
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        step="10"
+                        required
+                        value={tempThreshInput}
+                        onChange={(e) => setTempThreshInput(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-primary)',
+                          fontSize: '1.1rem',
+                          fontWeight: 700,
+                          outline: 'none',
+                        }}
+                      />
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                        ج.م
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '6px' }}>
+                      الحد الحالي المطبق: <strong style={{ color: '#d97706' }}>{freeDeliveryThreshold} ج.م</strong> (أي طلب أكبر من هذا المبلغ يُعفى من الشحن تلقائياً)
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+                      {[300, 400, 500, 600, 1000].map((thresh) => (
+                        <button
+                          key={thresh}
+                          type="button"
+                          onClick={() => setTempThreshInput(String(thresh))}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            border: tempThreshInput === String(thresh) ? '1px solid #d97706' : '1px solid var(--border-color)',
+                            background: tempThreshInput === String(thresh) ? 'rgba(217, 119, 6, 0.1)' : 'var(--bg-secondary)',
+                            color: tempThreshInput === String(thresh) ? '#d97706' : 'var(--text-secondary)',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {thresh} ج.م
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live Customer Preview Alert */}
+                <div
+                  style={{
+                    background: 'rgba(22, 163, 74, 0.05)',
+                    border: '1px solid rgba(22, 163, 74, 0.25)',
+                    borderRadius: '10px',
+                    padding: '14px 18px',
+                    fontSize: '0.85rem',
+                    color: 'var(--text-primary)',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  <strong style={{ color: '#16a34a' }}>معاينة ما يظهر للعميل في السلة وصفحة الدفع:</strong>
+                  <div>
+                    • إذا كان مجموع منتجات العميل أقل من <strong>{tempThreshInput} ج.م</strong>، ستتم إضافة <strong>{tempFeeInput} ج.م</strong> مصاريف شحن وتوصيل.
+                  </div>
+                  <div>
+                    • إذا كان مجموع منتجات العميل <strong>{tempThreshInput} ج.م</strong> أو أكثر، سيكون التوصيل <strong>مجاناً (0 ج.م)</strong> تلقائياً!
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="submit"
+                    disabled={savingSettings}
+                    style={{
+                      padding: '12px 28px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: '#16a34a',
+                      color: '#fff',
+                      fontSize: '0.92rem',
+                      fontWeight: 700,
+                      cursor: savingSettings ? 'not-allowed' : 'pointer',
+                      opacity: savingSettings ? 0.75 : 1,
+                      boxShadow: '0 3px 12px rgba(22, 163, 74, 0.25)',
+                    }}
+                  >
+                    {savingSettings ? 'جاري حفظ التعديل...' : 'حفظ وتطبيق سعر التوصيل فوراً ✓'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempFeeInput(String(deliveryFee));
+                      setTempThreshInput(String(freeDeliveryThreshold));
+                    }}
+                    style={{
+                      padding: '12px 18px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    إعادة ضبط
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 

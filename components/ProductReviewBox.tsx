@@ -257,8 +257,8 @@ export default function ProductReviewBox({
           </span>
         </div>
 
-        {/* Comment field */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        {/* Comment field & Submit Button */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
           <input
             type="text"
             placeholder={
@@ -269,35 +269,39 @@ export default function ProductReviewBox({
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             style={{
-              flex: 1,
-              padding: '8px 12px',
+              width: '100%',
+              boxSizing: 'border-box',
+              padding: '10px 14px',
               borderRadius: '8px',
               border: '1px solid #cbd5e1',
-              fontSize: '0.82rem',
+              fontSize: '0.84rem',
               outline: 'none',
               background: '#f8fafc',
             }}
           />
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              background: '#16a34a',
-              color: '#fff',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.75 : 1,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {loading
-              ? (isAr ? 'جاري الحفظ...' : 'Saving...')
-              : (isAr ? 'إرسال التقييم' : 'Submit')}
-          </button>
+          <div style={{ display: 'flex', justifyContent: isAr ? 'flex-start' : 'flex-end' }}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: '9px 20px',
+                borderRadius: '8px',
+                border: 'none',
+                background: '#16a34a',
+                color: '#fff',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.75 : 1,
+                boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {loading
+                ? (isAr ? 'جاري الحفظ...' : 'Saving...')
+                : (isAr ? 'إرسال التقييم 🌟' : 'Submit Review 🌟')}
+            </button>
+          </div>
         </div>
 
         {/* Alerts */}

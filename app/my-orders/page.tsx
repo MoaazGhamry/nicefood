@@ -214,7 +214,7 @@ export default function MyOrdersPage() {
 
   // 3. Logged in customer view
   return (
-    <div style={{ minHeight: '100vh', padding: '36px 20px 80px', background: 'var(--bg-primary, #ffffff)' }}>
+    <div style={{ minHeight: '100vh', padding: '24px 14px 130px', background: 'var(--bg-primary, #f8fafc)' }}>
       <div style={{ maxWidth: '840px', margin: '0 auto' }}>
         
         {/* Customer Profile Card */}
@@ -222,22 +222,22 @@ export default function MyOrdersPage() {
           style={{
             background: '#ffffff',
             borderRadius: '20px',
-            padding: '24px',
-            border: '1px solid #eaeaea',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-            marginBottom: '28px',
+            padding: '20px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+            marginBottom: '24px',
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '16px',
+            gap: '14px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: 1 }}>
             <div
               style={{
-                width: '52px',
-                height: '52px',
+                width: '50px',
+                height: '50px',
                 borderRadius: '16px',
                 background: 'linear-gradient(135deg, #16a34a, #15803d)',
                 color: '#fff',
@@ -246,33 +246,41 @@ export default function MyOrdersPage() {
                 justifyContent: 'center',
                 fontSize: '1.4rem',
                 fontWeight: 800,
+                flexShrink: 0,
+                boxShadow: '0 3px 10px rgba(22, 163, 74, 0.25)',
               }}
             >
               {customer.name ? customer.name.charAt(0) : '👤'}
             </div>
-            <div>
-              <h1 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111', margin: '0 0 4px' }}>
+            <div style={{ minWidth: 0 }}>
+              <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {locale === 'ar' ? `مرحباً، ${customer.name}` : `Welcome, ${customer.name}`}
               </h1>
-              <div style={{ fontSize: '0.86rem', color: '#666', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>📱 {customer.phone}</span>
-                {customer.address && <span>📍 {customer.address}</span>}
+              <div style={{ fontSize: '0.82rem', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <span style={{ fontWeight: 600 }}>📱 {customer.phone}</span>
+                {customer.address && (
+                  <span style={{ wordBreak: 'break-word', color: '#475569' }}>
+                    📍 {customer.address}
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '8px', width: '100%', maxWidth: '280px' }}>
             <Link
               href="/"
               style={{
-                padding: '8px 16px',
+                flex: 1,
+                padding: '8px 12px',
                 borderRadius: '10px',
-                border: '1px solid #e0e0e0',
-                background: '#fafafa',
-                color: '#333',
-                fontSize: '0.85rem',
+                border: '1px solid #cbd5e1',
+                background: '#f8fafc',
+                color: '#334155',
+                fontSize: '0.84rem',
                 fontWeight: 600,
                 textDecoration: 'none',
+                textAlign: 'center',
               }}
             >
               {locale === 'ar' ? 'تسوق المزيد' : 'Shop'}
@@ -281,14 +289,16 @@ export default function MyOrdersPage() {
               type="button"
               onClick={logout}
               style={{
-                padding: '8px 16px',
+                flex: 1,
+                padding: '8px 12px',
                 borderRadius: '10px',
                 border: '1px solid #fee2e2',
                 background: '#fef2f2',
                 color: '#b91c1c',
-                fontSize: '0.85rem',
+                fontSize: '0.84rem',
                 fontWeight: 600,
                 cursor: 'pointer',
+                textAlign: 'center',
               }}
             >
               {locale === 'ar' ? 'تسجيل الخروج' : 'Log Out'}
@@ -470,47 +480,78 @@ export default function MyOrdersPage() {
                     </div>
                   </div>
 
-                  {/* Customer Delivery Code (OTP) Banner */}
-                  {order.orderStatus !== 'delivered' && order.orderStatus !== 'cancelled' && (
+                  {/* Customer Delivery Code (OTP) Banner - ONLY when driver has taken the order (orderStatus === 'delivering') */}
+                  {order.orderStatus === 'delivering' && (
                     <div
                       style={{
-                        background: '#eff6ff',
-                        border: '1px solid #bfdbfe',
-                        borderRadius: '12px',
-                        padding: '10px 14px',
-                        marginBottom: '14px',
+                        background: '#f0fdf4',
+                        border: '2px solid #86efac',
+                        borderRadius: '14px',
+                        padding: '12px 16px',
+                        marginBottom: '16px',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         flexWrap: 'wrap',
-                        gap: '8px',
+                        gap: '10px',
+                        boxShadow: '0 4px 14px rgba(22, 163, 74, 0.08)',
                       }}
                     >
-                      <div style={{ fontSize: '0.84rem', color: '#1e40af', lineHeight: 1.4 }}>
-                        🔐 <strong>{isAr ? 'كود استلام الطلب:' : 'Handover Code:'}</strong>{' '}
-                        {isAr
-                          ? 'أعطه لكابتن التوصيل عند استلام الشحنة لتأكيد التسليم.'
-                          : 'Give this code to the delivery driver upon receiving your order.'}
+                      <div>
+                        <div style={{ fontSize: '0.92rem', color: '#166534', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>🔐</span>
+                          <span>{isAr ? 'كود استلام الطلب (أعطه للمندوب):' : 'Handover Verification OTP:'}</span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#15803d', marginTop: '2px' }}>
+                          {isAr
+                            ? 'كابتن التوصيل في الطريق إليك الآن! أعطه هذا الكود عند الاستلام لتأكيد شحنتك.'
+                            : 'The delivery captain is on the way! Provide this code upon receiving your order.'}
+                        </div>
                         {order.driverName && (
-                          <div style={{ marginTop: '3px', color: '#2563eb', fontWeight: 600 }}>
-                            🛵 {isAr ? 'الكابتن:' : 'Driver:'} {order.driverName} {order.driverPhone && `(${order.driverPhone})`}
+                          <div style={{ marginTop: '5px', color: '#1e40af', fontWeight: 700, fontSize: '0.82rem' }}>
+                            🛵 {isAr ? 'كابتن التوصيل:' : 'Driver:'} {order.driverName} {order.driverPhone && `(📱 ${order.driverPhone})`}
                           </div>
                         )}
                       </div>
                       <div
                         style={{
                           background: '#ffffff',
-                          border: '1px solid #93c5fd',
-                          padding: '4px 12px',
-                          borderRadius: '8px',
-                          fontWeight: 800,
-                          fontSize: '1.15rem',
-                          letterSpacing: '2px',
-                          color: '#1d4ed8',
+                          border: '2px solid #16a34a',
+                          padding: '6px 16px',
+                          borderRadius: '10px',
+                          fontWeight: 900,
+                          fontSize: '1.35rem',
+                          letterSpacing: '3px',
+                          color: '#15803d',
                           fontFamily: 'monospace',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                         }}
                       >
                         {order.deliveryCode || order.id.slice(-4).toUpperCase()}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Prior stages message: code will appear when driver picks up */}
+                  {(order.orderStatus === 'pending' || order.orderStatus === 'confirmed' || order.orderStatus === 'preparing') && (
+                    <div
+                      style={{
+                        background: '#f8fafc',
+                        border: '1px dashed #cbd5e1',
+                        borderRadius: '12px',
+                        padding: '10px 14px',
+                        marginBottom: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.2rem' }}>🛵</span>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: 1.4 }}>
+                        <strong style={{ color: '#334155' }}>{isAr ? 'كود الاستلام:' : 'Handover OTP:'}</strong>{' '}
+                        {isAr
+                          ? 'سيظهر كود الاستلام السري هنا تلقائياً فور انطلاق كابتن التوصيل بالطلب إليك.'
+                          : 'Your secret delivery OTP will appear here once the delivery driver picks up your order.'}
                       </div>
                     </div>
                   )}
@@ -647,25 +688,47 @@ export default function MyOrdersPage() {
                   {/* Delivery details & total */}
                   <div
                     style={{
+                      paddingTop: '14px',
+                      borderTop: '1px solid #f1f5f9',
+                      fontSize: '0.84rem',
+                      color: '#475569',
                       display: 'flex',
-                      flexWrap: 'wrap',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '12px',
-                      paddingTop: '12px',
-                      borderTop: '1px solid #f0f0f0',
-                      fontSize: '0.85rem',
-                      color: '#555',
+                      flexDirection: 'column',
+                      gap: '8px',
                     }}
                   >
-                    <div>
-                      <div>📍 <strong>{isAr ? 'العنوان:' : 'Address:'}</strong> {order.customerAddress}</div>
-                      {order.deliveryTime && <div>⏰ <strong>{isAr ? 'موعد التوصيل:' : 'Delivery Time:'}</strong> {order.deliveryTime}</div>}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', lineHeight: 1.5, wordBreak: 'break-word' }}>
+                      <span style={{ flexShrink: 0 }}>📍</span>
+                      <div>
+                        <strong style={{ color: '#1e293b' }}>{isAr ? 'العنوان:' : 'Address:'}</strong>{' '}
+                        <span>{order.customerAddress}</span>
+                      </div>
                     </div>
 
-                    <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#666' }}>{isAr ? 'إجمالي الطلب: ' : 'Total: '}</span>
-                      <strong style={{ fontSize: '1.25rem', color: '#16a34a' }}>
+                    {order.deliveryTime && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', lineHeight: 1.5, wordBreak: 'break-word' }}>
+                        <span style={{ flexShrink: 0 }}>⏰</span>
+                        <div>
+                          <strong style={{ color: '#1e293b' }}>{isAr ? 'موعد التوصيل:' : 'Delivery Window:'}</strong>{' '}
+                          <span>{order.deliveryTime}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        paddingTop: '10px',
+                        marginTop: '4px',
+                        borderTop: '1px dashed #e2e8f0',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.86rem', color: '#64748b', fontWeight: 600 }}>
+                        {isAr ? 'إجمالي الطلب المطلوب:' : 'Total Amount:'}
+                      </span>
+                      <strong style={{ fontSize: '1.3rem', color: '#16a34a', fontWeight: 800 }}>
                         {order.total} {currencySymbol}
                       </strong>
                     </div>

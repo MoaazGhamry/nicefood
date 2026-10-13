@@ -9,7 +9,23 @@ export default function CartPage() {
   const { items, total, itemCount, updateQuantity, removeItem, clearCart } = useCart();
   const { locale, t } = useLocale();
 
-  const deliveryFee = total > 500 || total === 0 ? 0 : 35;
+  const [feeConfig, setFeeConfig] = React.useState({ fee: 35, threshold: 500 });
+
+  React.useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data.settings) {
+          setFeeConfig({
+            fee: data.settings.deliveryFee ?? 35,
+            threshold: data.settings.freeDeliveryThreshold ?? 500,
+          });
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const deliveryFee = total >= feeConfig.threshold || total === 0 ? 0 : feeConfig.fee;
   const grandTotal = total + deliveryFee;
 
   const isAr = locale === 'ar';

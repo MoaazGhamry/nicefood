@@ -243,25 +243,44 @@ export default function OrderSuccessContent({ order }: OrderSuccessContentProps)
               {isAr ? 'رقم الطلب:' : 'Order ID:'} #{order.id.slice(-6).toUpperCase()}
             </div>
 
-            <div
-              style={{
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                color: '#1d4ed8',
-                padding: '6px 20px',
-                borderRadius: 'var(--radius-full, 9999px)',
-                fontWeight: 800,
-                fontSize: '0.9rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              <span>{isAr ? '🔐 كود الاستلام:' : '🔐 Handover Code:'}</span>
-              <span style={{ letterSpacing: '1px', fontFamily: 'monospace', fontWeight: 900 }}>
-                {order.deliveryCode || order.id.slice(-4).toUpperCase()}
-              </span>
-            </div>
+            {order.orderStatus === 'delivering' ? (
+              <div
+                style={{
+                  background: '#f0fdf4',
+                  border: '2px solid #86efac',
+                  color: '#15803d',
+                  padding: '6px 20px',
+                  borderRadius: 'var(--radius-full, 9999px)',
+                  fontWeight: 800,
+                  fontSize: '0.92rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>{isAr ? '🔐 كود الاستلام للمندوب:' : '🔐 Handover Code:'}</span>
+                <span style={{ letterSpacing: '2px', fontFamily: 'monospace', fontWeight: 900 }}>
+                  {order.deliveryCode || order.id.slice(-4).toUpperCase()}
+                </span>
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  color: '#1d4ed8',
+                  padding: '6px 16px',
+                  borderRadius: 'var(--radius-full, 9999px)',
+                  fontWeight: 600,
+                  fontSize: '0.82rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>🛵 {isAr ? 'سيظهر كود الاستلام السري في صفحة "طلباتي" فور انطلاق المندوب' : 'Handover OTP will appear in My Orders when driver departs'}</span>
+              </div>
+            )}
           </div>
 
           {/* Order Details Box */}
