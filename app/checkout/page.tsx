@@ -5,20 +5,32 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/lib/cart-context';
 import { useLocale } from '@/lib/locale-context';
+import { useCustomerAuth } from '@/lib/customer-auth-context';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, total, clearCart } = useCart();
   const { locale, t } = useLocale();
+  const { customer, login, register: registerCustomer } = useCustomerAuth();
 
   // Form State
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
   const [city, setCity] = useState('العاشر من رمضان');
   const [address, setAddress] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('أسرع وقت ممكن (خلال ساعتين)');
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'paymob' | 'wallet'>('cash');
+
+  // Pre-fill fields if customer is logged in
+  useEffect(() => {
+    if (customer) {
+      if (customer.name && !name) setName(customer.name);
+      if (customer.phone && !phone) setPhone(customer.phone);
+      if (customer.address && !address) setAddress(customer.address);
+    }
+  }, [customer]);
 
   // GPS Location state
   const [lat, setLat] = useState<number | null>(null);
@@ -134,6 +146,53 @@ export default function CheckoutPage() {
     try {
       const fullAddress = `${city} - ${address}`;
 
+      // Ensure customer has an account to track their orders
+      let currentUserId = customer?.id;
+
+      if (!currentUserId) {
+        if (!accountPassword || accountPassword.trim().length < 4) {
+          setErrorMsg(
+            locale === 'ar'
+              ? 'برجاء تعيين كلمة مرور لحسابك (4 أحرف على الأقل) لتتمكن من متابعة وإدارة طلبك'
+              : 'Please set a password for your account (at least 4 characters) to track your order'
+          );
+          setSubmitting(false);
+          return;
+        }
+
+        // Try registering new customer
+        const regRes = await registerCustomer({
+          name: name.trim(),
+          phone: phone.trim(),
+          password: accountPassword.trim(),
+          address: fullAddress,
+        });
+
+        if (regRes.success) {
+          try {
+            const stored = localStorage.getItem('nicefood_customer_session');
+            if (stored) currentUserId = JSON.parse(stored).id;
+          } catch (e) {}
+        } else {
+          // If already registered, attempt login with entered password
+          const loginRes = await login(phone.trim(), accountPassword.trim());
+          if (loginRes.success) {
+            try {
+              const stored = localStorage.getItem('nicefood_customer_session');
+              if (stored) currentUserId = JSON.parse(stored).id;
+            } catch (e) {}
+          } else {
+            setErrorMsg(
+              locale === 'ar'
+                ? 'يوجد حساب مسجل بالفعل برقم الهاتف هذا. يرجى التأكد من كلمة المرور أو تسجيل الدخول أولاً.'
+                : 'An account is already registered with this phone. Please check your password or log in first.'
+            );
+            setSubmitting(false);
+            return;
+          }
+        }
+      }
+
       // Case 1: Paymob Online Gateway Payment
       if (paymentMethod === 'paymob') {
         const payRes = await fetch('/api/paymob/initiate', {
@@ -149,6 +208,7 @@ export default function CheckoutPage() {
             notes,
             items,
             total: grandTotal,
+            userId: currentUserId || null,
           }),
         });
 
@@ -185,6 +245,7 @@ export default function CheckoutPage() {
           notes,
           items,
           total: grandTotal,
+          userId: currentUserId || null,
         }),
       });
 
@@ -285,8 +346,57 @@ export default function CheckoutPage() {
                 }}
               >
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '16px' }}>
-                  {locale === 'ar' ? 'بيانات العميل المستلم' : 'Customer Information'}
+                  {locale === 'ar' ? 'بيانات العميل المستلم والحساب' : 'Customer Account & Delivery'}
                 </h3>
+
+                {customer ? (
+                  <div
+                    style={{
+                      background: '#ecfdf5',
+                      border: '1px solid #a7f3d0',
+                      borderRadius: '12px',
+                      padding: '12px 16px',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                    }}
+                  >
+                    <div style={{ fontSize: '0.86rem', color: '#065f46', fontWeight: 600 }}>
+                      👤 {locale === 'ar' ? `مسجل باسم: ${customer.name} (${customer.phone}) - سيتم ربط الطلب بحسابك تلقائياً` : `Logged in as: ${customer.name} (${customer.phone})`}
+                    </div>
+                    <Link
+                      href="/my-orders"
+                      style={{ fontSize: '0.82rem', color: '#047857', fontWeight: 700, textDecoration: 'underline' }}
+                    >
+                      {locale === 'ar' ? 'عرض طلباتي السابقة' : 'My Orders'}
+                    </Link>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      background: '#eff6ff',
+                      border: '1px solid #bfdbfe',
+                      borderRadius: '12px',
+                      padding: '12px 16px',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                    }}
+                  >
+                    <div style={{ fontSize: '0.86rem', color: '#1e40af', lineHeight: 1.4 }}>
+                      💡 {locale === 'ar' ? 'لربط طلبك بحسابك ومتابعته، يرجى تعيين كلمة مرور بالأسفل أو ' : 'To track your order, please set a password below or '}
+                      <Link href="/login?redirect=/checkout" style={{ fontWeight: 700, textDecoration: 'underline', color: '#1e40af' }}>
+                        {locale === 'ar' ? 'تسجيل الدخول هنا' : 'Log In here'}
+                      </Link>
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div>
@@ -334,6 +444,35 @@ export default function CheckoutPage() {
                       }}
                     />
                   </div>
+
+                  {!customer && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 600 }}>
+                        {locale === 'ar' ? 'تعيين كلمة مرور لحسابك * (لمتابعة وإدارة طلبك)' : 'Set Account Password * (To track your orders)'}
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        placeholder={locale === 'ar' ? 'أدخل كلمة مرور لحسابك (4 أحرف على الأقل)' : 'Enter password (min 4 characters)'}
+                        value={accountPassword}
+                        onChange={(e) => setAccountPassword(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          borderRadius: 'var(--radius-sm, 8px)',
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.92rem',
+                        }}
+                      />
+                      <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                        {locale === 'ar'
+                          ? 'ستتمكن برقم هاتفك وكلمة المرور هذه من تسجيل الدخول ورؤية حالة طلبك وإلغائه في أي وقت'
+                          : 'Use your phone & password to check and manage your orders at any time'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 

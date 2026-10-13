@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { useCart } from '@/lib/cart-context';
 import { useLocale } from '@/lib/locale-context';
 import { useTheme } from '@/lib/theme-context';
+import { useCustomerAuth } from '@/lib/customer-auth-context';
 import { usePathname } from 'next/navigation';
 
 export default function Header() {
   const { itemCount } = useCart();
   const { t, locale, toggleLocale } = useLocale();
   const { theme, toggleTheme } = useTheme();
+  const { customer } = useCustomerAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -93,6 +95,13 @@ export default function Header() {
           >
             {t('nav.offers')}
           </Link>
+          <Link
+            href={customer ? "/my-orders" : "/login"}
+            className={`header__nav-link ${isActive('/my-orders') || isActive('/login') ? 'header__nav-link--active' : ''}`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            {customer ? (locale === 'ar' ? 'طلباتي' : 'My Orders') : (locale === 'ar' ? 'حسابي / طلباتي' : 'My Orders')}
+          </Link>
         </nav>
 
         {/* Action Buttons */}
@@ -143,6 +152,20 @@ export default function Header() {
             </svg>
             <span>{locale === 'ar' ? 'واتساب' : 'WhatsApp'}</span>
           </a>
+
+          {/* Customer Orders / Account Button */}
+          <Link
+            href={customer ? "/my-orders" : "/login"}
+            className="header__cart-btn"
+            style={{ textDecoration: 'none' }}
+            title={customer ? (locale === 'ar' ? `حسابي (${customer.name})` : `My Account (${customer.name})`) : (locale === 'ar' ? 'تسجيل الدخول / طلباتي' : 'Log In / My Orders')}
+            aria-label="My Orders"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </Link>
 
           {/* Cart Icon Button */}
           <Link href="/cart" className="header__cart-btn" aria-label="Cart">

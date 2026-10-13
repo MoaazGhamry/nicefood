@@ -11,11 +11,14 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   name      String
-  email     String   @unique
+  email     String?  @unique
+  phone     String?  @unique
   password  String
-  role      String   @default("admin") // "superadmin" | "admin"
+  address   String?
+  role      String   @default("customer") // "superadmin" | "admin" | "customer"
   brandId   String?
   brand     Brand?   @relation(fields: [brandId], references: [id])
+  orders    Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -60,6 +63,8 @@ model Product {
 
 model Order {
   id              String      @id @default(cuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
   customerName    String
   customerPhone   String
   customerAddress String

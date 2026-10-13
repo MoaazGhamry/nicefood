@@ -47,6 +47,7 @@ export async function POST(req: Request) {
       notes,
       items,
       total,
+      userId,
     } = body;
 
     // 2. Strict Input Validation
@@ -104,6 +105,7 @@ export async function POST(req: Request) {
         customerName: cleanName,
         customerPhone: cleanPhone,
         customerAddress: cleanAddress,
+        userId: userId || null,
         customerLat: customerLat ? parseFloat(customerLat) : null,
         customerLng: customerLng ? parseFloat(customerLng) : null,
         paymentMethod: paymentMethod || 'cash',

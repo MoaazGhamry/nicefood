@@ -15,6 +15,7 @@ export async function POST(req: Request) {
       notes,
       items,
       total,
+      userId,
     } = body;
 
     if (!customerName || !customerPhone || !items || items.length === 0) {
@@ -62,6 +63,7 @@ export async function POST(req: Request) {
         customerName,
         customerPhone,
         customerAddress,
+        userId: userId || null,
         customerLat: customerLat ? parseFloat(customerLat) : null,
         customerLng: customerLng ? parseFloat(customerLng) : null,
         paymentMethod: 'paymob_visa',

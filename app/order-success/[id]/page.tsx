@@ -348,6 +348,28 @@ export default async function OrderSuccessPage({ params }: PageProps) {
             </a>
 
             <Link
+              href="/my-orders"
+              style={{
+                padding: '13px 20px',
+                borderRadius: 'var(--radius-sm, 8px)',
+                background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                textAlign: 'center',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
+              }}
+            >
+              <span>📦</span>
+              <span>عرض ومتابعة حالة كل طلباتي</span>
+            </Link>
+
+            <Link
               href="/"
               style={{
                 padding: '12px 20px',
