@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCustomerAuth } from '@/lib/customer-auth-context';
 import { useLocale } from '@/lib/locale-context';
+import ProductReviewBox from '@/components/ProductReviewBox';
 
 export default function MyOrdersPage() {
   const router = useRouter();
@@ -505,46 +506,86 @@ export default function MyOrdersPage() {
                     </div>
                   )}
 
+                  {/* Delivered Rating Encouragement Banner */}
+                  {order.orderStatus === 'delivered' && (
+                    <div
+                      style={{
+                        background: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        borderRadius: '12px',
+                        padding: '10px 14px',
+                        marginBottom: '14px',
+                        fontSize: '0.84rem',
+                        color: '#15803d',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      <span>🌟</span>
+                      <span>
+                        {locale === 'ar'
+                          ? 'تم تسليم طلبك بنجاح! يسعدنا تقييمك للمنتجات بالأسفل لمساعدتنا على تقديم أفضل جودة دائماً.'
+                          : 'Order delivered successfully! Please rate the products below to help us maintain top quality.'}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Order items */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
                     {order.items?.map((item: any, idx: number) => {
                       const prodName = locale === 'ar' ? (item.product?.nameAr || item.product?.name) : item.product?.name;
                       const brandName = locale === 'ar' ? (item.product?.brand?.nameAr || item.product?.brand?.name) : item.product?.brand?.name;
 
                       return (
-                        <div
-                          key={idx}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '8px 12px',
-                            background: '#fbfbfb',
-                            borderRadius: '10px',
-                            border: '1px solid #f2f2f2',
-                            fontSize: '0.88rem',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            {item.product?.imageUrl && (
-                              <img
-                                src={item.product.imageUrl}
-                                alt={prodName}
-                                style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'contain' }}
-                              />
-                            )}
-                            <div>
-                              <div style={{ fontWeight: 600, color: '#222' }}>{prodName}</div>
-                              {brandName && <div style={{ fontSize: '0.75rem', color: '#888' }}>{brandName}</div>}
+                        <div key={idx} style={{ display: 'flex', flexDirection: 'column' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '10px 14px',
+                              background: '#fbfbfb',
+                              borderRadius: '12px',
+                              border: '1px solid #f0f0f0',
+                              fontSize: '0.88rem',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              {item.product?.imageUrl && (
+                                <img
+                                  src={item.product.imageUrl}
+                                  alt={prodName}
+                                  style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'contain' }}
+                                />
+                              )}
+                              <div>
+                                <div style={{ fontWeight: 600, color: '#222' }}>{prodName}</div>
+                                {brandName && <div style={{ fontSize: '0.75rem', color: '#888' }}>{brandName}</div>}
+                              </div>
+                            </div>
+
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ color: '#666' }}>{item.quantity} × {item.price} ج.م</span>
+                              <div style={{ fontWeight: 700, color: '#111' }}>
+                                {(item.quantity * item.price).toFixed(0)} ج.م
+                              </div>
                             </div>
                           </div>
 
-                          <div style={{ textAlign: 'right' }}>
-                            <span style={{ color: '#666' }}>{item.quantity} × {item.price} ج.م</span>
-                            <div style={{ fontWeight: 700, color: '#111' }}>
-                              {(item.quantity * item.price).toFixed(0)} ج.م
-                            </div>
-                          </div>
+                          {/* Post-Delivery Rating Box */}
+                          {order.orderStatus === 'delivered' && (
+                            <ProductReviewBox
+                              orderId={order.id}
+                              productId={item.productId}
+                              productName={prodName}
+                              isDelivered={true}
+                              customerName={customer?.name || order.customerName}
+                              customerPhone={customer?.phone || order.customerPhone}
+                              userId={customer?.id || order.userId}
+                            />
+                          )}
                         </div>
                       );
                     })}

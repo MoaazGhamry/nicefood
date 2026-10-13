@@ -57,6 +57,7 @@ model Product {
   unit        String      @default("kg") // kg, piece, pack
   minOrder    Int         @default(1)
   orderItems  OrderItem[]
+  reviews     Review[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
@@ -92,3 +93,20 @@ model OrderItem {
   price     Float
   total     Float
 }
+
+model Review {
+  id            String   @id @default(cuid())
+  orderId       String
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId        String?
+  customerName  String
+  customerPhone String?
+  rating        Int      @default(5) // 1 to 5 stars
+  comment       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([orderId, productId])
+}
+

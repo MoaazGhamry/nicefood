@@ -2523,6 +2523,11 @@ body {
   animation: buttonPop 0.3s ease;
 }
 
+/* Mobile Bottom Navigation Bar - HIDDEN BY DEFAULT ON DESKTOP */
+.mobile-bottom-nav {
+  display: none !important;
+}
+
 /* ==================== MOBILE SCREEN OPTIMIZATIONS (<= 768px) ==================== */
 @media (max-width: 768px) {
   :root {
