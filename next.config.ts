@@ -10,10 +10,6 @@ const securityHeaders = [
     value: "max-age=63072000; includeSubDomains; preload",
   },
   {
-    key: "X-Frame-Options",
-    value: "SAMEORIGIN",
-  },
-  {
     key: "X-Content-Type-Options",
     value: "nosniff",
   },
@@ -31,7 +27,37 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/:path*",
+        source: "/((?!order-success|payment|api/paymob).*)",
+        headers: [
+          ...securityHeaders,
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+        ],
+      },
+      {
+        source: "/order-success/:path*",
+        headers: [
+          ...securityHeaders,
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'self' https://accept.paymob.com",
+          },
+        ],
+      },
+      {
+        source: "/payment/:path*",
+        headers: [
+          ...securityHeaders,
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'self' https://accept.paymob.com",
+          },
+        ],
+      },
+      {
+        source: "/api/paymob/:path*",
         headers: securityHeaders,
       },
     ];

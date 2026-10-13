@@ -61,6 +61,12 @@ export default async function OrderSuccessPage({ params }: PageProps) {
 
   return (
     <div style={{ minHeight: '100vh', padding: '50px 20px 90px' }}>
+      {/* Breakout of Paymob iframe if framed */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `if (window.top !== window.self) { try { window.top.location.href = window.location.href; } catch(e){} }`,
+        }}
+      />
       <div style={{ maxWidth: '680px', margin: '0 auto' }}>
         
         {/* Success Card */}
