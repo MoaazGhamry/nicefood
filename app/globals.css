@@ -183,6 +183,55 @@ html[data-theme="dark"] {
   --shadow-card-hover: 0 24px 50px -10px rgba(0, 0, 0, 0.90), inset 0 1px 1px 0 rgba(255, 255, 255, 0.22);
 }
 
+/* ==================== DYNAMIC BRAND OVERRIDES (BASE / LIGHT MODE) ==================== */
+html[data-brand="tamoush"] {
+  --brand-primary: #1d24bf;
+  --brand-primary-light: #2563eb;
+  --brand-primary-dark: #1e1b94;
+  --brand-secondary: #3b82f6;
+  --brand-glow: rgba(29, 36, 191, 0.16);
+  --brand-secondary-glow: rgba(37, 99, 235, 0.12);
+  --brand-border: rgba(29, 36, 191, 0.25);
+  --brand-gradient: linear-gradient(135deg, #1d24bf 0%, #2563eb 100%);
+  --brand-surface-tint: rgba(29, 36, 191, 0.04);
+}
+
+html[data-brand="ibn-el-asoul"] {
+  --brand-primary: #950101;
+  --brand-primary-light: #b91c1c;
+  --brand-primary-dark: #730000;
+  --brand-secondary: #dc2626;
+  --brand-glow: rgba(149, 1, 1, 0.16);
+  --brand-secondary-glow: rgba(220, 38, 38, 0.12);
+  --brand-border: rgba(149, 1, 1, 0.25);
+  --brand-gradient: linear-gradient(135deg, #950101 0%, #b91c1c 100%);
+  --brand-surface-tint: rgba(149, 1, 1, 0.04);
+}
+
+html[data-brand="mazaya"] {
+  --brand-primary: #2e7e35;
+  --brand-primary-light: #16a34a;
+  --brand-primary-dark: #1b5e20;
+  --brand-secondary: #22c55e;
+  --brand-glow: rgba(46, 126, 53, 0.16);
+  --brand-secondary-glow: rgba(34, 197, 94, 0.12);
+  --brand-border: rgba(46, 126, 53, 0.25);
+  --brand-gradient: linear-gradient(135deg, #2e7e35 0%, #16a34a 100%);
+  --brand-surface-tint: rgba(46, 126, 53, 0.04);
+}
+
+html[data-brand="offers"] {
+  --brand-primary: #d97706;
+  --brand-primary-light: #f59e0b;
+  --brand-primary-dark: #b45309;
+  --brand-secondary: #fbbf24;
+  --brand-glow: rgba(217, 119, 6, 0.18);
+  --brand-secondary-glow: rgba(245, 158, 11, 0.14);
+  --brand-border: rgba(217, 119, 6, 0.28);
+  --brand-gradient: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  --brand-surface-tint: rgba(217, 119, 6, 0.05);
+}
+
 /* ==================== DYNAMIC BRAND OVERRIDES (DARK MODE) ==================== */
 html[data-theme="dark"][data-brand="tamoush"] {
   --brand-primary: #3b82f6;
@@ -291,25 +340,77 @@ input, textarea, select {
   background: var(--bg-primary);
 }
 
-/* Dynamic Multi-Brand Live Aurora Mesh */
+/* ==================== DYNAMIC BRAND-SPECIFIC AURORA SYSTEM ==================== */
+:root,
+html[data-brand="nicefood"] {
+  --aurora-color-1: rgba(0, 168, 78, 0.38); /* NiceFood Emerald */
+  --aurora-color-2: rgba(132, 204, 22, 0.26); /* Fresh Lime */
+  --aurora-color-3: rgba(217, 119, 6, 0.22); /* Factory Gold */
+  --aurora-color-4: rgba(5, 150, 74, 0.32); /* Forest Mint */
+  --aurora-color-5: rgba(0, 104, 44, 0.24); /* Deep Emerald */
+}
+
+/* Taamoosh Specific: Royal Cobalt Blue, Electric Sapphire, Azure Glow */
+html[data-brand="tamoush"] {
+  --aurora-color-1: rgba(29, 36, 191, 0.52); /* Royal Cobalt */
+  --aurora-color-2: rgba(37, 99, 235, 0.44); /* Electric Sapphire */
+  --aurora-color-3: rgba(96, 165, 250, 0.32); /* Sky Cyan */
+  --aurora-color-4: rgba(30, 58, 138, 0.46); /* Deep Midnight Navy */
+  --aurora-color-5: rgba(147, 197, 253, 0.25); /* Icy Light Azure */
+}
+
+/* Ibn El-Ossool Specific: Authentic Baladi Crimson, Fiery Ruby, Smoky Charcoal Maroon */
+html[data-brand="ibn-el-asoul"] {
+  --aurora-color-1: rgba(149, 1, 1, 0.52); /* Deep Baladi Crimson */
+  --aurora-color-2: rgba(185, 28, 28, 0.44); /* Rich Ruby */
+  --aurora-color-3: rgba(245, 158, 11, 0.26); /* Oriental Spice Amber */
+  --aurora-color-4: rgba(127, 29, 29, 0.48); /* Dark Charcoal Burgundy */
+  --aurora-color-5: rgba(239, 68, 68, 0.28); /* Bright Pepper Red */
+}
+
+/* Mazaya Specific: Pure Jade Green, Deli Cold-Cuts Olive, Sage Mint */
+html[data-brand="mazaya"] {
+  --aurora-color-1: rgba(46, 126, 53, 0.52); /* Pure Mazaya Jade */
+  --aurora-color-2: rgba(22, 163, 74, 0.44); /* Fresh Deli Green */
+  --aurora-color-3: rgba(74, 222, 128, 0.28); /* Pistachio Mint */
+  --aurora-color-4: rgba(20, 83, 45, 0.46); /* Deep Cypress */
+  --aurora-color-5: rgba(134, 239, 172, 0.24); /* Tender Spring Leaf */
+}
+
+/* Offers Specific: Radiant Amber Gold, Honey Sun, Flame Coral */
+html[data-brand="offers"] {
+  --aurora-color-1: rgba(217, 119, 6, 0.55); /* Deep Amber Gold */
+  --aurora-color-2: rgba(245, 158, 11, 0.45); /* Golden Honey */
+  --aurora-color-3: rgba(239, 68, 68, 0.32); /* Promo Ruby Coral */
+  --aurora-color-4: rgba(180, 83, 9, 0.48); /* Roasted Bronze */
+  --aurora-color-5: rgba(251, 191, 36, 0.28); /* Radiant Sun Gold */
+}
+
+/* Soften for Light Mode */
+html[data-theme="light"] {
+  --aurora-mesh-opacity: 0.45;
+  --aurora-mesh-blur: 105px;
+}
+html[data-theme="dark"] {
+  --aurora-mesh-opacity: 0.95;
+  --aurora-mesh-blur: 85px;
+}
+
+/* Dynamic Brand-Specific Live Aurora Mesh */
 .liquid-aurora-mesh {
   position: absolute;
   inset: -25%;
   background: 
-    radial-gradient(ellipse 55% 45% at 20% 25%, rgba(0, 168, 78, 0.28) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 50% at 80% 20%, rgba(29, 36, 191, 0.30) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 25% 75%, rgba(149, 1, 1, 0.28) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 50% at 75% 80%, rgba(46, 126, 53, 0.28) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(217, 119, 6, 0.20) 0%, transparent 60%);
-  filter: blur(85px);
-  opacity: 0.9;
+    radial-gradient(ellipse 55% 45% at 20% 25%, var(--aurora-color-1) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 80% 20%, var(--aurora-color-2) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 25% 75%, var(--aurora-color-4) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 50% at 75% 80%, var(--aurora-color-5) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, var(--aurora-color-3) 0%, transparent 60%);
+  filter: blur(var(--aurora-mesh-blur, 85px));
+  opacity: var(--aurora-mesh-opacity, 0.95);
   animation: liquidAuroraMorph 24s ease-in-out infinite alternate;
   will-change: transform, filter;
-}
-
-html[data-theme="light"] .liquid-aurora-mesh {
-  opacity: 0.5;
-  filter: blur(100px);
+  transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes liquidAuroraMorph {
@@ -318,65 +419,71 @@ html[data-theme="light"] .liquid-aurora-mesh {
   100% { transform: scale(1.04) rotate(-3deg) translate(35px, -25px); }
 }
 
-/* Floating Brand Orbs - Individual Fluid Living Blobs */
+/* Floating Brand Orbs - Dynamically themed to the active company */
 .liquid-brand-orb {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
   will-change: transform;
+  transition: background 0.9s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.9s ease;
 }
 
-/* NiceFood Emerald & Lime Orb */
-.liquid-brand-orb--nicefood {
-  width: 620px;
-  height: 620px;
+/* Orb 1: Primary Brand Core (Top-Left) */
+.liquid-brand-orb--nicefood,
+.liquid-brand-orb:nth-child(2) {
+  width: 640px;
+  height: 640px;
   top: -120px;
   left: -80px;
-  background: radial-gradient(circle, rgba(0, 168, 78, 0.38) 0%, rgba(132, 204, 22, 0.18) 55%, transparent 75%);
+  background: radial-gradient(circle, var(--aurora-color-1) 0%, transparent 70%);
   filter: blur(90px);
   animation: orbDrift1 26s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate;
 }
 
-/* Taamoosh Royal Cobalt Blue Orb */
-.liquid-brand-orb--tamoush {
-  width: 600px;
-  height: 600px;
+/* Orb 2: Vibrant Accent (Top-Right) */
+.liquid-brand-orb--tamoush,
+.liquid-brand-orb:nth-child(3) {
+  width: 620px;
+  height: 620px;
   top: 8%;
   right: -120px;
-  background: radial-gradient(circle, rgba(29, 36, 191, 0.40) 0%, rgba(59, 130, 246, 0.20) 55%, transparent 75%);
+  background: radial-gradient(circle, var(--aurora-color-2) 0%, transparent 70%);
   filter: blur(90px);
   animation: orbDrift2 30s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate;
 }
 
-/* Ibn El Osool Crimson Baladi Red Orb */
-.liquid-brand-orb--ibn {
-  width: 640px;
-  height: 640px;
+/* Orb 3: Deep Base Glow (Bottom-Left) */
+.liquid-brand-orb--ibn,
+.liquid-brand-orb:nth-child(4) {
+  width: 650px;
+  height: 650px;
   bottom: -120px;
   left: 12%;
-  background: radial-gradient(circle, rgba(149, 1, 1, 0.38) 0%, rgba(220, 38, 38, 0.18) 55%, transparent 75%);
+  background: radial-gradient(circle, var(--aurora-color-4) 0%, transparent 70%);
   filter: blur(95px);
   animation: orbDrift3 28s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate;
 }
 
-/* Mazaya Jade Green Orb */
-.liquid-brand-orb--mazaya {
-  width: 580px;
-  height: 580px;
+/* Orb 4: Rich Atmospheric Tone (Bottom-Right) */
+.liquid-brand-orb--mazaya,
+.liquid-brand-orb:nth-child(5) {
+  width: 600px;
+  height: 600px;
   bottom: 8%;
   right: 8%;
-  background: radial-gradient(circle, rgba(46, 126, 53, 0.38) 0%, rgba(34, 197, 94, 0.18) 55%, transparent 75%);
+  background: radial-gradient(circle, var(--aurora-color-5) 0%, transparent 70%);
   filter: blur(90px);
   animation: orbDrift4 25s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate;
 }
 
-/* Factory Amber Gold Orb */
-.liquid-brand-orb--gold {
-  width: 480px;
-  height: 480px;
+/* Orb 5: Center Heart Glow (Center-Drift) */
+.liquid-brand-orb--gold,
+.liquid-brand-orb:nth-child(6) {
+  width: 500px;
+  height: 500px;
   top: 42%;
   left: 38%;
-  background: radial-gradient(circle, rgba(217, 119, 6, 0.28) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--aurora-color-3) 0%, transparent 70%);
   filter: blur(85px);
   animation: orbDrift5 22s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate;
 }
