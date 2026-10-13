@@ -39,6 +39,7 @@ interface DeliveryOrder {
   notes: string | null;
   items: OrderItem[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 export default function DeliveryPortalPage() {
@@ -59,7 +60,7 @@ export default function DeliveryPortalPage() {
   // Orders State
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
-  const [activeTab, setActiveTab] = useState<'available' | 'delivering' | 'completed'>('delivering');
+  const [activeTab, setActiveTab] = useState<'available' | 'delivering' | 'completed' | 'daily_report'>('delivering');
 
   // Delivery Code state per order
   const [deliveryCodes, setDeliveryCodes] = useState<Record<string, string>>({});
@@ -358,15 +359,190 @@ export default function DeliveryPortalPage() {
     );
   }
 
+  // Helper to get YYYY-MM-DD in local time
+  const getDateKey = (dateStr?: string) => {
+    try {
+      const d = dateStr ? new Date(dateStr) : new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    } catch {
+      return '';
+    }
+  };
+
+  const todayKey = getDateKey();
+  const yesterdayKey = (() => {
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    return getDateKey(y.toISOString());
+  })();
+
+  const [selectedReportDate, setSelectedReportDate] = useState<string>(todayKey);
+
   // Filter orders by tab
   const availableOrders = orders.filter((o) => o.orderStatus === 'confirmed' || o.orderStatus === 'preparing');
   const myDeliveringOrders = orders.filter((o) => o.orderStatus === 'delivering');
   const completedOrders = orders.filter((o) => o.orderStatus === 'delivered');
 
+  // Filter orders delivered today specifically
+  const completedOrdersToday = completedOrders.filter((o) => {
+    const dKey = getDateKey(o.createdAt);
+    return dKey === todayKey;
+  });
+
   // Total cash collected by this driver today
-  const totalCashDelivered = completedOrders
+  const totalCashDelivered = completedOrdersToday
     .filter((o) => o.paymentMethod === 'cash')
     .reduce((sum, o) => sum + o.total, 0);
+
+  // Group completed orders by day for the Daily Dashboard
+  const dailyGroups = React.useMemo(() => {
+    const groups: Record<
+      string,
+      {
+        dateKey: string;
+        orders: DeliveryOrder[];
+        cashOrdersCount: number;
+        cashTotal: number;
+        onlineOrdersCount: number;
+        onlineTotal: number;
+        grandTotal: number;
+        productsMap: Record<
+          string,
+          {
+            name: string;
+            brandName: string;
+            unit: string;
+            quantity: number;
+          }
+        >;
+      }
+    > = {};
+
+    completedOrders.forEach((o) => {
+      const dKey = getDateKey(o.createdAt);
+      if (!groups[dKey]) {
+        groups[dKey] = {
+          dateKey: dKey,
+          orders: [],
+          cashOrdersCount: 0,
+          cashTotal: 0,
+          onlineOrdersCount: 0,
+          onlineTotal: 0,
+          grandTotal: 0,
+          productsMap: {},
+        };
+      }
+
+      groups[dKey].orders.push(o);
+      groups[dKey].grandTotal += o.total;
+      if (o.paymentMethod === 'cash') {
+        groups[dKey].cashOrdersCount += 1;
+        groups[dKey].cashTotal += o.total;
+      } else {
+        groups[dKey].onlineOrdersCount += 1;
+        groups[dKey].onlineTotal += o.total;
+      }
+
+      o.items?.forEach((it) => {
+        const pName = isAr ? (it.product?.nameAr || it.product?.name) : (it.product?.name || it.product?.nameAr);
+        const bName = isAr ? (it.product?.brand?.nameAr || '') : (it.product?.brand?.name || it.product?.brand?.nameAr || '');
+        const unit = (it.product as any)?.unit || (isAr ? 'كجم' : 'kg');
+        const key = `${pName}_${bName}`;
+
+        if (!groups[dKey].productsMap[key]) {
+          groups[dKey].productsMap[key] = {
+            name: pName,
+            brandName: bName,
+            unit,
+            quantity: 0,
+          };
+        }
+        groups[dKey].productsMap[key].quantity += it.quantity;
+      });
+    });
+
+    return Object.values(groups).sort((a, b) => b.dateKey.localeCompare(a.dateKey));
+  }, [completedOrders, isAr]);
+
+  // Current day report data
+  const currentDayReport = dailyGroups.find((g) => g.dateKey === selectedReportDate) || {
+    dateKey: selectedReportDate,
+    orders: [],
+    cashOrdersCount: 0,
+    cashTotal: 0,
+    onlineOrdersCount: 0,
+    onlineTotal: 0,
+    grandTotal: 0,
+    productsMap: {},
+  };
+
+  const formatDayLabel = (dateKey: string) => {
+    if (!dateKey) return '';
+    if (dateKey === todayKey) return isAr ? 'اليوم' : 'Today';
+    if (dateKey === yesterdayKey) return isAr ? 'أمس' : 'Yesterday';
+
+    try {
+      const [y, m, d] = dateKey.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      return dateObj.toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return dateKey;
+    }
+  };
+
+  // WhatsApp daily report text for the driver to share with the company
+  const whatsappDailyReportText = encodeURIComponent(
+    isAr
+      ? `*📋 تقرير التقفيل اليومي لكابتن التوصيل: ${driver?.name || 'كابتن نايس فود'}*\n` +
+        `*📅 التاريخ:* ${currentDayReport.dateKey} (${formatDayLabel(currentDayReport.dateKey)})\n` +
+        `*🛵 عدد الأوردرات المسلّمة:* ${currentDayReport.orders.length} طلب\n` +
+        `*💰 إجمالي الكاش المحصّل للتوريد:* ${currentDayReport.cashTotal} ج.م (${currentDayReport.cashOrdersCount} طلب كاش)\n` +
+        `*💳 إجمالي المدفوع أونلاين:* ${currentDayReport.onlineTotal} ج.م (${currentDayReport.onlineOrdersCount} طلب)\n` +
+        `*📈 إجمالي مبيعات اليوم:* ${currentDayReport.grandTotal} ج.م\n\n` +
+        `*📦 الأصناف والكميات المسلّمة:*\n` +
+        (Object.values(currentDayReport.productsMap).length > 0
+          ? Object.values(currentDayReport.productsMap)
+              .map((p, idx) => `${idx + 1}. ${p.name} ${p.brandName ? `(${p.brandName})` : ''}: ${p.quantity} ${p.unit}`)
+              .join('\n')
+          : 'لا توجد أصناف') +
+        `\n\n*📝 قائمة الأوردرات المسلّمة:*\n` +
+        (currentDayReport.orders.length > 0
+          ? currentDayReport.orders
+              .map(
+                (o, idx) =>
+                  `${idx + 1}. #${o.id.slice(-6).toUpperCase()} - ${o.customerName} - ${o.total} ج.م (${o.paymentMethod === 'cash' ? 'كاش' : 'أونلاين'}) - كود: ${o.deliveryCode || 'N/A'}`
+              )
+              .join('\n')
+          : 'لا توجد أوردرات مسجلة بهذا اليوم')
+      : `*Daily Delivery Closing Report: ${driver?.name || 'Driver'}*\n` +
+        `*Date:* ${currentDayReport.dateKey} (${formatDayLabel(currentDayReport.dateKey)})\n` +
+        `*Delivered Orders:* ${currentDayReport.orders.length}\n` +
+        `*Cash to Remit:* ${currentDayReport.cashTotal} EGP (${currentDayReport.cashOrdersCount} cash orders)\n` +
+        `*Online Payments:* ${currentDayReport.onlineTotal} EGP (${currentDayReport.onlineOrdersCount} online orders)\n` +
+        `*Total Sales:* ${currentDayReport.grandTotal} EGP\n\n` +
+        `*Items Delivered:*\n` +
+        (Object.values(currentDayReport.productsMap).length > 0
+          ? Object.values(currentDayReport.productsMap)
+              .map((p, idx) => `${idx + 1}. ${p.name} ${p.brandName ? `(${p.brandName})` : ''}: ${p.quantity} ${p.unit}`)
+              .join('\n')
+          : 'None') +
+        `\n\n*Orders:*\n` +
+        (currentDayReport.orders.length > 0
+          ? currentDayReport.orders
+              .map(
+                (o, idx) =>
+                  `${idx + 1}. #${o.id.slice(-6).toUpperCase()} - ${o.customerName} - ${o.total} EGP (${o.paymentMethod === 'cash' ? 'Cash' : 'Online'}) - OTP: ${o.deliveryCode || 'N/A'}`
+              )
+              .join('\n')
+          : 'No orders recorded for this day')
+  );
 
   return (
     <div style={{ minHeight: '100vh', padding: '24px 16px 80px', background: '#f8fafc' }}>
@@ -504,10 +680,9 @@ export default function DeliveryPortalPage() {
         {/* Tab Switcher */}
         <div
           style={{
-            display: 'flex',
-            background: '#e2e8f0',
-            borderRadius: '14px',
-            padding: '4px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+            gap: '8px',
             marginBottom: '20px',
           }}
         >
@@ -515,20 +690,21 @@ export default function DeliveryPortalPage() {
             type="button"
             onClick={() => setActiveTab('delivering')}
             style={{
-              flex: 1,
-              padding: '10px 0',
-              borderRadius: '10px',
-              border: 'none',
-              background: activeTab === 'delivering' ? '#ffffff' : 'transparent',
+              padding: '12px 8px',
+              borderRadius: '12px',
+              border: activeTab === 'delivering' ? '2px solid #2563eb' : '1px solid #e2e8f0',
+              background: activeTab === 'delivering' ? '#ffffff' : '#f8fafc',
               color: activeTab === 'delivering' ? '#2563eb' : '#475569',
-              fontWeight: activeTab === 'delivering' ? 700 : 600,
-              fontSize: '0.88rem',
+              fontWeight: activeTab === 'delivering' ? 800 : 600,
+              fontSize: '0.85rem',
               cursor: 'pointer',
-              boxShadow: activeTab === 'delivering' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+              boxShadow: activeTab === 'delivering' ? '0 4px 12px rgba(37, 99, 235, 0.12)' : 'none',
+              transition: 'all 0.15s ease',
+              textAlign: 'center',
             }}
           >
             {isAr
-              ? `🛵 قيد التوصيل معك (${myDeliveringOrders.length})`
+              ? `🛵 قيد التوصيل (${myDeliveringOrders.length})`
               : `🛵 On Delivery (${myDeliveringOrders.length})`}
           </button>
 
@@ -536,47 +712,649 @@ export default function DeliveryPortalPage() {
             type="button"
             onClick={() => setActiveTab('available')}
             style={{
-              flex: 1,
-              padding: '10px 0',
-              borderRadius: '10px',
-              border: 'none',
-              background: activeTab === 'available' ? '#ffffff' : 'transparent',
+              padding: '12px 8px',
+              borderRadius: '12px',
+              border: activeTab === 'available' ? '2px solid #d97706' : '1px solid #e2e8f0',
+              background: activeTab === 'available' ? '#ffffff' : '#f8fafc',
               color: activeTab === 'available' ? '#d97706' : '#475569',
-              fontWeight: activeTab === 'available' ? 700 : 600,
-              fontSize: '0.88rem',
+              fontWeight: activeTab === 'available' ? 800 : 600,
+              fontSize: '0.85rem',
               cursor: 'pointer',
-              boxShadow: activeTab === 'available' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+              boxShadow: activeTab === 'available' ? '0 4px 12px rgba(217, 119, 6, 0.12)' : 'none',
+              transition: 'all 0.15s ease',
+              textAlign: 'center',
             }}
           >
             {isAr
-              ? `📦 طلبات جديدة جاهزة (${availableOrders.length})`
-              : `📦 Ready Orders (${availableOrders.length})`}
+              ? `📦 طلبات جاهزة (${availableOrders.length})`
+              : `📦 Ready (${availableOrders.length})`}
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('completed')}
             style={{
-              flex: 1,
-              padding: '10px 0',
-              borderRadius: '10px',
-              border: 'none',
-              background: activeTab === 'completed' ? '#ffffff' : 'transparent',
+              padding: '12px 8px',
+              borderRadius: '12px',
+              border: activeTab === 'completed' ? '2px solid #16a34a' : '1px solid #e2e8f0',
+              background: activeTab === 'completed' ? '#ffffff' : '#f8fafc',
               color: activeTab === 'completed' ? '#16a34a' : '#475569',
-              fontWeight: activeTab === 'completed' ? 700 : 600,
-              fontSize: '0.88rem',
+              fontWeight: activeTab === 'completed' ? 800 : 600,
+              fontSize: '0.85rem',
               cursor: 'pointer',
-              boxShadow: activeTab === 'completed' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+              boxShadow: activeTab === 'completed' ? '0 4px 12px rgba(22, 163, 74, 0.12)' : 'none',
+              transition: 'all 0.15s ease',
+              textAlign: 'center',
             }}
           >
             {isAr
               ? `✅ تم تسليمها (${completedOrders.length})`
               : `✅ Delivered (${completedOrders.length})`}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('daily_report')}
+            style={{
+              padding: '12px 8px',
+              borderRadius: '12px',
+              border: activeTab === 'daily_report' ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+              background: activeTab === 'daily_report' ? '#ffffff' : '#f8fafc',
+              color: activeTab === 'daily_report' ? '#7c3aed' : '#475569',
+              fontWeight: activeTab === 'daily_report' ? 800 : 600,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'daily_report' ? '0 4px 12px rgba(124, 58, 237, 0.14)' : 'none',
+              transition: 'all 0.15s ease',
+              textAlign: 'center',
+            }}
+          >
+            {isAr ? '📊 تقفيل اليومية' : '📊 Daily Report'}
+          </button>
         </div>
 
-        {/* Current Tab Orders Display */}
+        {/* Current Tab View Display */}
         {(() => {
+          // If Daily Closing Dashboard is active
+          if (activeTab === 'daily_report') {
+            const productsList = Object.values(currentDayReport.productsMap);
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {/* Daily Dashboard Header Card */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: '18px',
+                    padding: '20px',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <div>
+                      <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: '0 0 4px' }}>
+                        📊 {isAr ? 'تقفيل اليومية وحصر التسليم' : 'Daily Closing & Delivery Summary'}
+                      </h2>
+                      <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0 }}>
+                        {isAr
+                          ? 'كشف تفصيلي بكل ما تم تسليمه، عدد الأوردرات، وتوريد الكاش'
+                          : 'Complete report of delivered items, orders count, and cash remittance'}
+                      </p>
+                    </div>
+
+                    {/* WhatsApp Quick Share to Company */}
+                    <a
+                      href={`https://wa.me/201558580214?text=${whatsappDailyReportText}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        background: '#16a34a',
+                        color: '#ffffff',
+                        textDecoration: 'none',
+                        fontWeight: 700,
+                        fontSize: '0.84rem',
+                        boxShadow: '0 3px 10px rgba(22, 163, 74, 0.25)',
+                        transition: 'transform 0.15s ease',
+                      }}
+                    >
+                      <span>📲</span>
+                      <span>{isAr ? 'إرسال كشف التقفيل واتساب' : 'Send via WhatsApp'}</span>
+                    </a>
+                  </div>
+
+                  {/* Date Filter Controls */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      gap: '8px',
+                      paddingTop: '14px',
+                      borderTop: '1px solid #f1f5f9',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>
+                      📅 {isAr ? 'اختر اليوم:' : 'Select Day:'}
+                    </span>
+
+                    {/* Today Pill */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedReportDate(todayKey)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        border: selectedReportDate === todayKey ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                        background: selectedReportDate === todayKey ? '#f5f3ff' : '#ffffff',
+                        color: selectedReportDate === todayKey ? '#6d28d9' : '#334155',
+                        fontWeight: selectedReportDate === todayKey ? 700 : 500,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {isAr ? 'اليوم' : 'Today'}
+                    </button>
+
+                    {/* Yesterday Pill */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedReportDate(yesterdayKey)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        border: selectedReportDate === yesterdayKey ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                        background: selectedReportDate === yesterdayKey ? '#f5f3ff' : '#ffffff',
+                        color: selectedReportDate === yesterdayKey ? '#6d28d9' : '#334155',
+                        fontWeight: selectedReportDate === yesterdayKey ? 700 : 500,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {isAr ? 'أمس' : 'Yesterday'}
+                    </button>
+
+                    {/* Custom Date Picker */}
+                    <input
+                      type="date"
+                      value={selectedReportDate}
+                      onChange={(e) => setSelectedReportDate(e.target.value)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        background: '#ffffff',
+                        color: '#0f172a',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        outline: 'none',
+                        cursor: 'pointer',
+                      }}
+                    />
+
+                    {/* Selected Date Label Badge */}
+                    <div
+                      style={{
+                        marginInlineStart: 'auto',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        background: '#f1f5f9',
+                        color: '#475569',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {formatDayLabel(selectedReportDate)} ({selectedReportDate})
+                    </div>
+                  </div>
+                </div>
+
+                {/* KPI Metrics Grid for Selected Day */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                    gap: '12px',
+                  }}
+                >
+                  {/* Delivered Orders */}
+                  <div
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      padding: '16px',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>
+                        {isAr ? 'الأوردرات المسلّمة' : 'Delivered Orders'}
+                      </span>
+                      <span style={{ fontSize: '1.2rem' }}>🛵</span>
+                    </div>
+                    <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#0f172a', marginTop: '6px' }}>
+                      {currentDayReport.orders.length}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#16a34a', marginTop: '2px', fontWeight: 600 }}>
+                      {isAr ? 'طلب مكتمل بنجاح' : 'Completed orders'}
+                    </div>
+                  </div>
+
+                  {/* Cash to Remit */}
+                  <div
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      padding: '16px',
+                      border: '1px solid #bbf7d0',
+                      boxShadow: '0 2px 8px rgba(22, 163, 74, 0.05)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#15803d' }}>
+                        {isAr ? 'كاش للتوريد للشركة' : 'Cash to Remit'}
+                      </span>
+                      <span style={{ fontSize: '1.2rem' }}>💵</span>
+                    </div>
+                    <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#16a34a', marginTop: '6px' }}>
+                      {currentDayReport.cashTotal}{' '}
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{currencySymbol}</span>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px' }}>
+                      {isAr
+                        ? `${currentDayReport.cashOrdersCount} طلب كاش عند الاستلام`
+                        : `${currentDayReport.cashOrdersCount} cash orders`}
+                    </div>
+                  </div>
+
+                  {/* Online Paid */}
+                  <div
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      padding: '16px',
+                      border: '1px solid #bfdbfe',
+                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.05)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1d4ed8' }}>
+                        {isAr ? 'مدفوع إلكترونياً' : 'Online Paid'}
+                      </span>
+                      <span style={{ fontSize: '1.2rem' }}>💳</span>
+                    </div>
+                    <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#2563eb', marginTop: '6px' }}>
+                      {currentDayReport.onlineTotal}{' '}
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{currencySymbol}</span>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px' }}>
+                      {isAr
+                        ? `${currentDayReport.onlineOrdersCount} طلب مدفوع مسبقاً`
+                        : `${currentDayReport.onlineOrdersCount} pre-paid orders`}
+                    </div>
+                  </div>
+
+                  {/* Grand Total Sales */}
+                  <div
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      padding: '16px',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>
+                        {isAr ? 'إجمالي المبيعات' : 'Total Value'}
+                      </span>
+                      <span style={{ fontSize: '1.2rem' }}>📈</span>
+                    </div>
+                    <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#0f172a', marginTop: '6px' }}>
+                      {currentDayReport.grandTotal}{' '}
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{currencySymbol}</span>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px' }}>
+                      {isAr ? 'كاش + إلكتروني' : 'Cash + Online'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cash Remittance Notice Banner */}
+                {currentDayReport.cashTotal > 0 && (
+                  <div
+                    style={{
+                      background: '#fefce8',
+                      border: '1px solid #fef08a',
+                      borderRadius: '14px',
+                      padding: '14px 18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ fontSize: '1.5rem' }}>💰</div>
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#854d0e', fontSize: '0.9rem' }}>
+                        {isAr ? 'تنبيه عهدة التوريد النقدي:' : 'Cash Remittance Reminder:'}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#a16207', marginTop: '2px' }}>
+                        {isAr
+                          ? `يرجى تسليم مبلغ (${currentDayReport.cashTotal} ${currencySymbol}) لمسؤول الخزينة بنهاية اليوم مع توقيع كشف التقفيل.`
+                          : `Please hand over (${currentDayReport.cashTotal} ${currencySymbol}) to the company treasury at the end of shift.`}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section: سلم إيه اليوم (Products & Quantities Delivered Breakdown) */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: '18px',
+                    padding: '20px',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                      📦 {isAr ? 'الأصناف والكميات المسلّمة اليوم (حصر المنتجات)' : 'Products & Quantities Handed Over'}
+                    </h3>
+                    <span
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        background: '#f1f5f9',
+                        color: '#475569',
+                        padding: '4px 10px',
+                        borderRadius: '20px',
+                      }}
+                    >
+                      {productsList.length} {isAr ? 'صنف مختلف' : 'distinct items'}
+                    </span>
+                  </div>
+
+                  {productsList.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8' }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '6px' }}>📦</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                        {isAr ? 'لا توجد منتجات مسلّمة في هذا اليوم' : 'No items delivered on this day'}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
+                      {productsList.map((item, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            background: '#f8fafc',
+                            borderRadius: '12px',
+                            padding: '12px 14px',
+                            border: '1px solid #e2e8f0',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '10px',
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontWeight: 700,
+                                fontSize: '0.88rem',
+                                color: '#1e293b',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {item.name}
+                            </div>
+                            {item.brandName && (
+                              <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px' }}>
+                                🏷️ {item.brandName}
+                              </div>
+                            )}
+                          </div>
+                          <div
+                            style={{
+                              background: '#16a34a',
+                              color: '#ffffff',
+                              fontWeight: 800,
+                              fontSize: '0.9rem',
+                              padding: '6px 12px',
+                              borderRadius: '8px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {item.quantity} {item.unit}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Section: كشف الطلبات المسلّمة بالتفصيل */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: '18px',
+                    padding: '20px',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                      📋 {isAr ? 'سجل الطلبات المسلّمة بالتاريخ المحدد' : 'Delivered Orders Log for Date'}
+                    </h3>
+                    <span
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        background: '#dcfce7',
+                        color: '#15803d',
+                        padding: '4px 10px',
+                        borderRadius: '20px',
+                      }}
+                    >
+                      {currentDayReport.orders.length} {isAr ? 'أوردر' : 'orders'}
+                    </span>
+                  </div>
+
+                  {currentDayReport.orders.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8' }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '6px' }}>🛵</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                        {isAr ? 'لم يتم تسليم أي أوردرات في هذا التاريخ' : 'No orders were delivered on this date'}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {currentDayReport.orders.map((o, idx) => {
+                        const isCash = o.paymentMethod === 'cash';
+                        const timeStr = new Date(o.updatedAt || o.createdAt).toLocaleTimeString(
+                          isAr ? 'ar-EG' : 'en-US',
+                          { hour: '2-digit', minute: '2-digit' }
+                        );
+
+                        return (
+                          <div
+                            key={o.id}
+                            style={{
+                              background: '#f8fafc',
+                              borderRadius: '14px',
+                              padding: '14px',
+                              border: '1px solid #e2e8f0',
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: '8px',
+                                marginBottom: '10px',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span
+                                  style={{
+                                    background: '#0f172a',
+                                    color: '#ffffff',
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 800,
+                                    fontFamily: 'monospace',
+                                  }}
+                                >
+                                  #{o.id.slice(-6).toUpperCase()}
+                                </span>
+                                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                  🕒 {timeStr}
+                                </span>
+                                {o.deliveryCode && (
+                                  <span
+                                    style={{
+                                      fontSize: '0.74rem',
+                                      background: '#f0fdf4',
+                                      color: '#15803d',
+                                      border: '1px solid #86efac',
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    🔐 OTP: {o.deliveryCode}
+                                  </span>
+                                )}
+                              </div>
+
+                              <span
+                                style={{
+                                  fontSize: '0.82rem',
+                                  fontWeight: 700,
+                                  padding: '4px 10px',
+                                  borderRadius: '20px',
+                                  background: isCash ? '#fef3c7' : '#dbeafe',
+                                  color: isCash ? '#92400e' : '#1e40af',
+                                }}
+                              >
+                                {isCash ? `💵 كاش: ${o.total} ${currencySymbol}` : `💳 إلكتروني: ${o.total} ${currencySymbol}`}
+                              </span>
+                            </div>
+
+                            <div style={{ fontSize: '0.85rem', color: '#1e293b', fontWeight: 600, marginBottom: '4px' }}>
+                              👤 {o.customerName} • 📱 {o.customerPhone}
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '8px' }}>
+                              📍 {o.customerAddress}
+                            </div>
+
+                            {/* Order Items summary */}
+                            {o.items && o.items.length > 0 && (
+                              <div
+                                style={{
+                                  background: '#ffffff',
+                                  borderRadius: '8px',
+                                  padding: '8px 10px',
+                                  border: '1px solid #e2e8f0',
+                                  fontSize: '0.76rem',
+                                  color: '#334155',
+                                }}
+                              >
+                                <span style={{ fontWeight: 700, color: '#0f172a' }}>
+                                  {isAr ? 'الأصناف:' : 'Items:'}{' '}
+                                </span>
+                                {o.items
+                                  .map((it) => {
+                                    const pName = isAr ? (it.product?.nameAr || it.product?.name) : (it.product?.name || it.product?.nameAr);
+                                    const unit = (it.product as any)?.unit || (isAr ? 'كجم' : 'kg');
+                                    return `${pName} (${it.quantity} ${unit})`;
+                                  })
+                                  .join(' • ')}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Section: أرشيف الأيام السابقة */}
+                {dailyGroups.length > 1 && (
+                  <div
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: '18px',
+                      padding: '20px',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+                    }}
+                  >
+                    <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: '0 0 12px' }}>
+                      🗓️ {isAr ? 'أرشيف الأيام المسجلة بالنظام:' : 'Past Daily Logs Archive:'}
+                    </h3>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
+                      {dailyGroups.map((g) => (
+                        <button
+                          key={g.dateKey}
+                          type="button"
+                          onClick={() => setSelectedReportDate(g.dateKey)}
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            border: selectedReportDate === g.dateKey ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+                            background: selectedReportDate === g.dateKey ? '#f5f3ff' : '#f8fafc',
+                            cursor: 'pointer',
+                            textAlign: 'start',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 700, fontSize: '0.84rem', color: '#0f172a' }}>
+                              {formatDayLabel(g.dateKey)}
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                              {g.dateKey}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.76rem', color: '#16a34a', fontWeight: 600 }}>
+                            {g.orders.length} {isAr ? 'طلب مسلّم' : 'delivered'} • 💵 {g.cashTotal} {currencySymbol}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           const list =
             activeTab === 'delivering'
               ? myDeliveringOrders
