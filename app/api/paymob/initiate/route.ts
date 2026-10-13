@@ -58,12 +58,15 @@ export async function POST(req: Request) {
     const firstName = nameParts[0] || 'Customer';
     const lastName = nameParts.slice(1).join(' ') || 'NiceFood';
 
+    const deliveryCode = Math.floor(1000 + Math.random() * 9000).toString();
+
     const order = await prisma.order.create({
       data: {
         customerName,
         customerPhone,
         customerAddress,
         userId: userId || null,
+        deliveryCode,
         customerLat: customerLat ? parseFloat(customerLat) : null,
         customerLng: customerLng ? parseFloat(customerLng) : null,
         paymentMethod: 'paymob_visa',

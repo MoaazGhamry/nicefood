@@ -174,8 +174,19 @@ export default function Footer() {
               </Link>
             </li>
             <li>
+              <Link href="/my-orders" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                {locale === 'ar' ? 'طلباتي ومتابعة الشحنات' : 'My Orders'}
+              </Link>
+            </li>
+            <li>
               <Link href="/checkout" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
                 {t('checkout.title')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/delivery" style={{ color: '#16a34a', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span>🛵</span>
+                <span>{locale === 'ar' ? 'بوابة مناديب التوصيل' : 'Delivery Portal'}</span>
               </Link>
             </li>
           </ul>

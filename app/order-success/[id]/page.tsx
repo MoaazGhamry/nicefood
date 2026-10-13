@@ -200,18 +200,46 @@ export default async function OrderSuccessPage({ params }: PageProps) {
 
           <div
             style={{
-              display: 'inline-block',
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              padding: '6px 20px',
-              borderRadius: 'var(--radius-full, 9999px)',
-              fontWeight: 700,
-              fontSize: '0.9rem',
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '12px',
+              flexWrap: 'wrap',
               marginBottom: '28px',
             }}
           >
-            رقم الطلب: #{order.id.slice(-6).toUpperCase()}
+            <div
+              style={{
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
+                padding: '6px 20px',
+                borderRadius: 'var(--radius-full, 9999px)',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+              }}
+            >
+              رقم الطلب: #{order.id.slice(-6).toUpperCase()}
+            </div>
+
+            <div
+              style={{
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                color: '#1d4ed8',
+                padding: '6px 20px',
+                borderRadius: 'var(--radius-full, 9999px)',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <span>🔐 كود الاستلام:</span>
+              <span style={{ letterSpacing: '1px', fontFamily: 'monospace', fontWeight: 900 }}>
+                {order.deliveryCode || order.id.slice(-4).toUpperCase()}
+              </span>
+            </div>
           </div>
 
           {/* Order Details Box */}

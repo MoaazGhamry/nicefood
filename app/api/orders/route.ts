@@ -100,12 +100,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'لم يتم العثور على المنتجات المطلوبة' }, { status: 400 });
     }
 
+    const deliveryCode = Math.floor(1000 + Math.random() * 9000).toString();
+
     const order = await prisma.order.create({
       data: {
         customerName: cleanName,
         customerPhone: cleanPhone,
         customerAddress: cleanAddress,
         userId: userId || null,
+        deliveryCode,
         customerLat: customerLat ? parseFloat(customerLat) : null,
         customerLng: customerLng ? parseFloat(customerLng) : null,
         paymentMethod: paymentMethod || 'cash',

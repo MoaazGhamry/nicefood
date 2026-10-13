@@ -75,6 +75,10 @@ model Order {
   paymentStatus   String      @default("pending") // "pending" | "paid" | "failed"
   orderStatus     String      @default("pending") // "pending" | "confirmed" | "preparing" | "delivering" | "delivered" | "cancelled"
   deliveryTime    String?
+  deliveryCode    String?     // 4-digit code to confirm delivery
+  driverId        String?     // Delivery driver user ID
+  driverName      String?     // Delivery driver name
+  driverPhone     String?     // Delivery driver phone
   total           Float
   notes           String?
   paymobOrderId   String?

@@ -464,6 +464,48 @@ export default function MyOrdersPage() {
                     </div>
                   </div>
 
+                  {/* Customer Delivery Code (OTP) Banner */}
+                  {order.orderStatus !== 'delivered' && order.orderStatus !== 'cancelled' && (
+                    <div
+                      style={{
+                        background: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        borderRadius: '12px',
+                        padding: '10px 14px',
+                        marginBottom: '14px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                      }}
+                    >
+                      <div style={{ fontSize: '0.84rem', color: '#1e40af', lineHeight: 1.4 }}>
+                        🔐 <strong>كود استلام الطلب:</strong> أعطه لكابتن التوصيل عند استلام الشحنة لتأكيد التسليم.
+                        {order.driverName && (
+                          <div style={{ marginTop: '3px', color: '#2563eb', fontWeight: 600 }}>
+                            🛵 الكابتن: {order.driverName} {order.driverPhone && `(${order.driverPhone})`}
+                          </div>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          background: '#ffffff',
+                          border: '1px solid #93c5fd',
+                          padding: '4px 12px',
+                          borderRadius: '8px',
+                          fontWeight: 800,
+                          fontSize: '1.15rem',
+                          letterSpacing: '2px',
+                          color: '#1d4ed8',
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        {order.deliveryCode || order.id.slice(-4).toUpperCase()}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Pending Wallet Alert Banner */}
                   {isWalletPending && order.orderStatus !== 'cancelled' && (
                     <div
