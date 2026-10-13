@@ -256,11 +256,25 @@ const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('ar');
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('nicefood_locale');
+      if (saved === 'ar' || saved === 'en') {
+        setLocaleState(saved);
+      }
+    } catch (e) {
+      // localStorage may fail in private mode
+    }
+  }, []);
+
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
+    try {
+      localStorage.setItem('nicefood_locale', locale);
+    } catch (e) {}
   }, [locale]);
 
   const t = useCallback(

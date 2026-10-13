@@ -378,12 +378,14 @@ export default function MyOrdersPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {orders.map((order) => {
+              const isAr = locale === 'ar';
+              const currencySymbol = isAr ? 'ج.م' : 'EGP';
               const statusInfo = getStatusBadge(order.orderStatus);
               const paymentInfo = getPaymentBadge(order.paymentMethod, order.paymentStatus);
               const isCancellable = order.orderStatus === 'pending' || order.orderStatus === 'confirmed';
               const isWalletPending = (order.paymentMethod === 'wallet' || order.paymentMethod.includes('instapay')) && order.paymentStatus === 'pending';
 
-              const orderDate = new Date(order.createdAt).toLocaleDateString('ar-EG', {
+              const orderDate = new Date(order.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric',
@@ -392,11 +394,15 @@ export default function MyOrdersPage() {
               });
 
               const whatsappInquiryUrl = `https://wa.me/201558580214?text=${encodeURIComponent(
-                `مرحباً، أود الاستفسار عن طلبي رقم #${order.id.slice(-6)} بقيمة ${order.total} ج.م`
+                isAr
+                  ? `مرحباً، أود الاستفسار عن طلبي رقم #${order.id.slice(-6)} بقيمة ${order.total} ج.م`
+                  : `Hello, I would like to inquire about my order #${order.id.slice(-6)} (${order.total} EGP)`
               )}`;
 
               const whatsappReceiptUrl = `https://wa.me/201558580214?text=${encodeURIComponent(
-                `مرحباً، مرفق إيصال تحويل إنستا باي/المحفظة للطلب رقم #${order.id.slice(-6)} بقيمة ${order.total} ج.م - الاسم: ${customer.name}`
+                isAr
+                  ? `مرحباً، مرفق إيصال تحويل إنستا باي/المحفظة للطلب رقم #${order.id.slice(-6)} بقيمة ${order.total} ج.م - الاسم: ${customer.name}`
+                  : `Hello, attached is the InstaPay/wallet transfer receipt for order #${order.id.slice(-6)} (${order.total} EGP) - Name: ${customer.name}`
               )}`;
 
               return (
@@ -481,10 +487,13 @@ export default function MyOrdersPage() {
                       }}
                     >
                       <div style={{ fontSize: '0.84rem', color: '#1e40af', lineHeight: 1.4 }}>
-                        🔐 <strong>كود استلام الطلب:</strong> أعطه لكابتن التوصيل عند استلام الشحنة لتأكيد التسليم.
+                        🔐 <strong>{isAr ? 'كود استلام الطلب:' : 'Handover Code:'}</strong>{' '}
+                        {isAr
+                          ? 'أعطه لكابتن التوصيل عند استلام الشحنة لتأكيد التسليم.'
+                          : 'Give this code to the delivery driver upon receiving your order.'}
                         {order.driverName && (
                           <div style={{ marginTop: '3px', color: '#2563eb', fontWeight: 600 }}>
-                            🛵 الكابتن: {order.driverName} {order.driverPhone && `(${order.driverPhone})`}
+                            🛵 {isAr ? 'الكابتن:' : 'Driver:'} {order.driverName} {order.driverPhone && `(${order.driverPhone})`}
                           </div>
                         )}
                       </div>
@@ -523,7 +532,9 @@ export default function MyOrdersPage() {
                       }}
                     >
                       <div style={{ fontSize: '0.84rem', color: '#92400e', lineHeight: 1.5 }}>
-                        <strong>⚠️ مطلوب إرسال صورة التحويل:</strong> يرجى إرسال سكرين شوت بالتحويل على الرقم <strong>01558580214</strong> لاعتماد الطلب فوراً.
+                        <strong>{isAr ? '⚠️ مطلوب إرسال صورة التحويل:' : '⚠️ Transfer Screenshot Required:'}</strong>{' '}
+                        {isAr ? 'يرجى إرسال سكرين شوت بالتحويل على الرقم' : 'Please send a transfer screenshot to'}{' '}
+                        <strong>01558580214</strong> {isAr ? 'لاعتماد الطلب فوراً.' : 'for instant verification.'}
                       </div>
                       <a
                         href={whatsappReceiptUrl}
@@ -543,7 +554,7 @@ export default function MyOrdersPage() {
                         }}
                       >
                         <span>📸</span>
-                        <span>إرسال الإيصال واتساب</span>
+                        <span>{isAr ? 'إرسال الإيصال واتساب' : 'Send Screenshot on WhatsApp'}</span>
                       </a>
                     </div>
                   )}
@@ -567,7 +578,7 @@ export default function MyOrdersPage() {
                     >
                       <span>🌟</span>
                       <span>
-                        {locale === 'ar'
+                        {isAr
                           ? 'تم تسليم طلبك بنجاح! يسعدنا تقييمك للمنتجات بالأسفل لمساعدتنا على تقديم أفضل جودة دائماً.'
                           : 'Order delivered successfully! Please rate the products below to help us maintain top quality.'}
                       </span>
@@ -577,8 +588,8 @@ export default function MyOrdersPage() {
                   {/* Order items */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
                     {order.items?.map((item: any, idx: number) => {
-                      const prodName = locale === 'ar' ? (item.product?.nameAr || item.product?.name) : item.product?.name;
-                      const brandName = locale === 'ar' ? (item.product?.brand?.nameAr || item.product?.brand?.name) : item.product?.brand?.name;
+                      const prodName = isAr ? (item.product?.nameAr || item.product?.name) : item.product?.name;
+                      const brandName = isAr ? (item.product?.brand?.nameAr || item.product?.brand?.name) : item.product?.brand?.name;
 
                       return (
                         <div key={idx} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -608,10 +619,10 @@ export default function MyOrdersPage() {
                               </div>
                             </div>
 
-                            <div style={{ textAlign: 'right' }}>
-                              <span style={{ color: '#666' }}>{item.quantity} × {item.price} ج.م</span>
+                            <div style={{ textAlign: isAr ? 'left' : 'right' }}>
+                              <span style={{ color: '#666' }}>{item.quantity} × {item.price} {currencySymbol}</span>
                               <div style={{ fontWeight: 700, color: '#111' }}>
-                                {(item.quantity * item.price).toFixed(0)} ج.م
+                                {(item.quantity * item.price).toFixed(0)} {currencySymbol}
                               </div>
                             </div>
                           </div>
@@ -648,14 +659,14 @@ export default function MyOrdersPage() {
                     }}
                   >
                     <div>
-                      <div>📍 <strong>العنوان:</strong> {order.customerAddress}</div>
-                      {order.deliveryTime && <div>⏰ <strong>موعد التوصيل:</strong> {order.deliveryTime}</div>}
+                      <div>📍 <strong>{isAr ? 'العنوان:' : 'Address:'}</strong> {order.customerAddress}</div>
+                      {order.deliveryTime && <div>⏰ <strong>{isAr ? 'موعد التوصيل:' : 'Delivery Time:'}</strong> {order.deliveryTime}</div>}
                     </div>
 
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#666' }}>إجمالي الطلب: </span>
+                    <div style={{ textAlign: isAr ? 'left' : 'right' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#666' }}>{isAr ? 'إجمالي الطلب: ' : 'Total: '}</span>
                       <strong style={{ fontSize: '1.25rem', color: '#16a34a' }}>
-                        {order.total} ج.م
+                        {order.total} {currencySymbol}
                       </strong>
                     </div>
                   </div>
@@ -665,7 +676,7 @@ export default function MyOrdersPage() {
                     style={{
                       display: 'flex',
                       flexWrap: 'wrap',
-                      justifyContent: 'flex-end',
+                      justifyContent: isAr ? 'flex-end' : 'flex-start',
                       gap: '10px',
                       marginTop: '16px',
                       paddingTop: '12px',
@@ -691,7 +702,7 @@ export default function MyOrdersPage() {
                       }}
                     >
                       <span>💬</span>
-                      <span>استفسار واتساب</span>
+                      <span>{isAr ? 'استفسار واتساب' : 'WhatsApp Inquiry'}</span>
                     </a>
 
                     {isCancellable && (
@@ -714,7 +725,7 @@ export default function MyOrdersPage() {
                         }}
                       >
                         <span>❌</span>
-                        <span>{cancellingId === order.id ? 'جاري الإلغاء...' : 'إلغاء الطلب'}</span>
+                        <span>{cancellingId === order.id ? (isAr ? 'جاري الإلغاء...' : 'Cancelling...') : (isAr ? 'إلغاء الطلب' : 'Cancel Order')}</span>
                       </button>
                     )}
                   </div>

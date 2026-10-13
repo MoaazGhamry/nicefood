@@ -12,16 +12,28 @@ export default function CartPage() {
   const deliveryFee = total > 500 || total === 0 ? 0 : 35;
   const grandTotal = total + deliveryFee;
 
+  const isAr = locale === 'ar';
+  const currencySymbol = isAr ? 'ج.م' : 'EGP';
+
   // WhatsApp formatted order text
   const whatsappOrderText = encodeURIComponent(
-    `*طلب جديد من موقع NiceFood:*\n\n` +
-      items
-        .map(
-          (item, idx) =>
-            `${idx + 1}. ${item.nameAr || item.name} (${item.brandNameAr || item.brandName}) - الكمية: ${item.quantity} ${item.unit} - السعر: ${(item.offerPrice || item.price) * item.quantity} ج.م`
-        )
-        .join('\n') +
-      `\n\n*المجموع الفرعي:* ${total} ج.م\n*التوصيل:* ${deliveryFee === 0 ? 'مجاني' : `${deliveryFee} ج.م`}\n*الإجمالي المطلوب:* ${grandTotal} ج.م\n\nبرجاء تأكيد الطلب وتحديد موعد التوصيل.`
+    isAr
+      ? `*طلب جديد من موقع NiceFood:*\n\n` +
+          items
+            .map(
+              (item, idx) =>
+                `${idx + 1}. ${item.nameAr || item.name} (${item.brandNameAr || item.brandName}) - الكمية: ${item.quantity} ${item.unit} - السعر: ${(item.offerPrice || item.price) * item.quantity} ج.م`
+            )
+            .join('\n') +
+          `\n\n*المجموع الفرعي:* ${total} ج.م\n*التوصيل:* ${deliveryFee === 0 ? 'مجاني' : `${deliveryFee} ج.م`}\n*الإجمالي المطلوب:* ${grandTotal} ج.م\n\nبرجاء تأكيد الطلب وتحديد موعد التوصيل.`
+      : `*New Order from NiceFood Website:*\n\n` +
+          items
+            .map(
+              (item, idx) =>
+                `${idx + 1}. ${item.name || item.nameAr} (${item.brandName || item.brandNameAr}) - Qty: ${item.quantity} ${item.unit} - Price: ${(item.offerPrice || item.price) * item.quantity} EGP`
+            )
+            .join('\n') +
+          `\n\n*Subtotal:* ${total} EGP\n*Delivery:* ${deliveryFee === 0 ? 'Free' : `${deliveryFee} EGP`}\n*Total:* ${grandTotal} EGP\n\nPlease confirm order and delivery window.`
   );
 
   return (
@@ -190,7 +202,7 @@ export default function CartPage() {
                           {locale === 'ar' ? item.nameAr : item.name}
                         </h4>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          {unitPrice} ج.م / {item.unit}
+                          {unitPrice} {currencySymbol} / {item.unit}
                         </div>
                       </div>
 
@@ -242,7 +254,7 @@ export default function CartPage() {
                       {/* Total & Delete */}
                       <div style={{ textAlign: locale === 'ar' ? 'left' : 'right', minWidth: '70px' }}>
                         <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--nicefood-gold)' }}>
-                          {itemTotal} ج.م
+                          {itemTotal} {currencySymbol}
                         </div>
                         <button
                           type="button"
@@ -302,13 +314,13 @@ export default function CartPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '18px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
                   <span>{locale === 'ar' ? 'المجموع الفرعي' : 'Subtotal'}</span>
-                  <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{total} ج.م</span>
+                  <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{total} {currencySymbol}</span>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
                   <span>{locale === 'ar' ? 'خدمة التوصيل' : 'Delivery Fee'}</span>
                   <span style={{ fontWeight: 700, color: deliveryFee === 0 ? 'var(--nicefood-green)' : 'var(--text-primary)' }}>
-                    {deliveryFee === 0 ? (locale === 'ar' ? 'مجاني (عرض)' : 'Free') : `${deliveryFee} ج.م`}
+                    {deliveryFee === 0 ? (locale === 'ar' ? 'مجاني (عرض)' : 'Free') : `${deliveryFee} ${currencySymbol}`}
                   </span>
                 </div>
 
@@ -325,7 +337,7 @@ export default function CartPage() {
                     {locale === 'ar' ? 'الإجمالي النهائي' : 'Total'}
                   </span>
                   <span style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--nicefood-gold)' }}>
-                    {grandTotal} <span style={{ fontSize: '0.85rem' }}>ج.م</span>
+                    {grandTotal} <span style={{ fontSize: '0.85rem' }}>{currencySymbol}</span>
                   </span>
                 </div>
               </div>

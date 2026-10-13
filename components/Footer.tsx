@@ -283,7 +283,7 @@ export default function Footer() {
           </Link>
         </div>
 
-        <span>صنع في مصر</span>
+        <span>{locale === 'ar' ? 'صنع في مصر 🇪🇬' : 'Made in Egypt 🇪🇬'}</span>
       </div>
     </footer>
   );

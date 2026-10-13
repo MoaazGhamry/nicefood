@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLocale } from '@/lib/locale-context';
 
 interface OrderItem {
   id: string;
@@ -13,6 +14,7 @@ interface OrderItem {
     nameAr: string;
     imageUrl?: string;
     brand?: {
+      name?: string;
       nameAr: string;
     };
   };
@@ -40,6 +42,10 @@ interface DeliveryOrder {
 }
 
 export default function DeliveryPortalPage() {
+  const { locale } = useLocale();
+  const isAr = locale === 'ar';
+  const currencySymbol = isAr ? 'ج.م' : 'EGP';
+
   // Driver Auth State
   const [driver, setDriver] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -240,10 +246,12 @@ export default function DeliveryPortalPage() {
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ fontSize: '3rem', marginBottom: '8px' }}>🛵</div>
             <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
-              بوابة مناديب التوصيل | نايس فود
+              {isAr ? 'بوابة مناديب التوصيل | نايس فود' : 'Delivery Drivers Portal | NiceFood'}
             </h1>
             <p style={{ fontSize: '0.88rem', color: '#64748b', margin: 0 }}>
-              سجل دخولك لاستلام الأوردرات والتنقل لموقع العميل وتأكيد التسليم
+              {isAr
+                ? 'سجل دخولك لاستلام الأوردرات والتنقل لموقع العميل وتأكيد التسليم'
+                : 'Sign in to accept delivery orders, navigate to clients, and confirm handover'}
             </p>
           </div>
 
@@ -265,7 +273,7 @@ export default function DeliveryPortalPage() {
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                رقم هاتف المندوب
+                {isAr ? 'رقم هاتف المندوب' : 'Driver Mobile Number'}
               </label>
               <input
                 type="tel"
@@ -287,7 +295,7 @@ export default function DeliveryPortalPage() {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                كلمة المرور
+                {isAr ? 'كلمة المرور' : 'Password'}
               </label>
               <input
                 type="password"
@@ -323,7 +331,9 @@ export default function DeliveryPortalPage() {
                 boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
               }}
             >
-              {submittingLogin ? 'جاري التحقق...' : 'دخول كابتن التوصيل 🛵'}
+              {submittingLogin
+                ? (isAr ? 'جاري التحقق...' : 'Verifying...')
+                : (isAr ? 'دخول كابتن التوصيل 🛵' : 'Sign In as Driver 🛵')}
             </button>
           </form>
 
@@ -340,8 +350,8 @@ export default function DeliveryPortalPage() {
               textAlign: 'center',
             }}
           >
-            <strong>بيانات الدخول التجريبية للكابتن:</strong>
-            <div>الهاتف: <code>01558580214</code> | كلمة المرور: <code>delivery123</code></div>
+            <strong>{isAr ? 'بيانات الدخول التجريبية للكابتن:' : 'Demo Driver Credentials:'}</strong>
+            <div>{isAr ? 'الهاتف:' : 'Phone:'} <code>01558580214</code> | {isAr ? 'كلمة المرور:' : 'Password:'} <code>delivery123</code></div>
           </div>
         </div>
       </div>
@@ -455,30 +465,38 @@ export default function DeliveryPortalPage() {
           }}
         >
           <div style={{ background: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>طلبات جاهزة للاستلام</div>
+            <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+              {isAr ? 'طلبات جاهزة للاستلام' : 'Ready for Pickup'}
+            </div>
             <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#d97706', marginTop: '4px' }}>
               {availableOrders.length}
             </div>
           </div>
 
           <div style={{ background: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>طلبات معك بالطريق 🛵</div>
+            <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+              {isAr ? 'طلبات معك بالطريق 🛵' : 'Out for Delivery 🛵'}
+            </div>
             <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2563eb', marginTop: '4px' }}>
               {myDeliveringOrders.length}
             </div>
           </div>
 
           <div style={{ background: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>تم تسليمها اليوم ✅</div>
+            <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+              {isAr ? 'تم تسليمها اليوم ✅' : 'Delivered Today ✅'}
+            </div>
             <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#16a34a', marginTop: '4px' }}>
               {completedOrders.length}
             </div>
           </div>
 
           <div style={{ background: '#ffffff', padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>كاش محصل اليوم 💰</div>
+            <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+              {isAr ? 'كاش محصل اليوم 💰' : 'Cash Collected Today 💰'}
+            </div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#047857', marginTop: '4px' }}>
-              {totalCashDelivered} ج.م
+              {totalCashDelivered} {currencySymbol}
             </div>
           </div>
         </div>
@@ -509,7 +527,9 @@ export default function DeliveryPortalPage() {
               boxShadow: activeTab === 'delivering' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
             }}
           >
-            🛵 قيد التوصيل معك ({myDeliveringOrders.length})
+            {isAr
+              ? `🛵 قيد التوصيل معك (${myDeliveringOrders.length})`
+              : `🛵 On Delivery (${myDeliveringOrders.length})`}
           </button>
 
           <button
@@ -528,7 +548,9 @@ export default function DeliveryPortalPage() {
               boxShadow: activeTab === 'available' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
             }}
           >
-            📦 طلبات جديدة جاهزة ({availableOrders.length})
+            {isAr
+              ? `📦 طلبات جديدة جاهزة (${availableOrders.length})`
+              : `📦 Ready Orders (${availableOrders.length})`}
           </button>
 
           <button
@@ -547,7 +569,9 @@ export default function DeliveryPortalPage() {
               boxShadow: activeTab === 'completed' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
             }}
           >
-            ✅ تم تسليمها ({completedOrders.length})
+            {isAr
+              ? `✅ تم تسليمها (${completedOrders.length})`
+              : `✅ Delivered (${completedOrders.length})`}
           </button>
         </div>
 
@@ -665,18 +689,18 @@ export default function DeliveryPortalPage() {
                             }}
                           >
                             {isDelivered
-                              ? 'تم التسليم ✅'
+                              ? (isAr ? 'تم التسليم ✅' : 'Delivered ✅')
                               : isDelivering
-                              ? 'في الطريق للتوصيل 🛵'
-                              : 'جاهز للاستلام 📦'}
+                              ? (isAr ? 'في الطريق للتوصيل 🛵' : 'Out for Delivery 🛵')
+                              : (isAr ? 'جاهز للاستلام 📦' : 'Ready for Pickup 📦')}
                           </span>
                         </div>
                         <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
-                          الموعد: {order.deliveryTime || 'أسرع وقت'}
+                          {isAr ? 'الموعد:' : 'Time:'} {order.deliveryTime || (isAr ? 'أسرع وقت' : 'ASAP')}
                         </div>
                       </div>
 
-                      <div style={{ textAlign: 'right' }}>
+                      <div style={{ textAlign: isAr ? 'right' : 'left' }}>
                         <div
                           style={{
                             padding: '4px 12px',
@@ -688,7 +712,9 @@ export default function DeliveryPortalPage() {
                             border: `1px solid ${isCash ? '#fde68a' : '#a7f3d0'}`,
                           }}
                         >
-                          {isCash ? `💰 تحصيل كاش: ${order.total} ج.م` : `💳 مدفوع أونلاين: ${order.total} ج.م`}
+                          {isCash
+                            ? (isAr ? `💰 تحصيل كاش: ${order.total} ج.م` : `💰 Cash to collect: ${order.total} EGP`)
+                            : (isAr ? `💳 مدفوع أونلاين: ${order.total} ج.م` : `💳 Paid Online: ${order.total} EGP`)}
                         </div>
                       </div>
                     </div>
@@ -713,12 +739,12 @@ export default function DeliveryPortalPage() {
                       </div>
 
                       <div style={{ fontSize: '0.86rem', color: '#334155', marginBottom: '12px', lineHeight: 1.4 }}>
-                        📍 <strong>العنوان:</strong> {order.customerAddress}
+                        📍 <strong>{isAr ? 'العنوان:' : 'Address:'}</strong> {order.customerAddress}
                       </div>
 
                       {order.notes && (
                         <div style={{ fontSize: '0.8rem', color: '#92400e', background: '#fffbeb', padding: '6px 10px', borderRadius: '6px', marginBottom: '12px' }}>
-                          📝 <strong>ملاحظات العميل:</strong> {order.notes}
+                          📝 <strong>{isAr ? 'ملاحظات العميل:' : 'Customer Notes:'}</strong> {order.notes}
                         </div>
                       )}
 
@@ -743,7 +769,7 @@ export default function DeliveryPortalPage() {
                           }}
                         >
                           <span>📞</span>
-                          <span>اتصال بالعميل</span>
+                          <span>{isAr ? 'اتصال بالعميل' : 'Call Customer'}</span>
                         </a>
 
                         <a
@@ -767,7 +793,7 @@ export default function DeliveryPortalPage() {
                           }}
                         >
                           <span>💬</span>
-                          <span>واتساب العميل</span>
+                          <span>{isAr ? 'واتساب العميل' : 'WhatsApp'}</span>
                         </a>
 
                         <a
@@ -791,7 +817,7 @@ export default function DeliveryPortalPage() {
                           }}
                         >
                           <span>🗺️</span>
-                          <span>فتح اللوكيشن بملاحة جوجل (GPS)</span>
+                          <span>{isAr ? 'فتح اللوكيشن بملاحة جوجل (GPS)' : 'Open GPS Navigation (Maps)'}</span>
                         </a>
                       </div>
                     </div>
@@ -799,7 +825,7 @@ export default function DeliveryPortalPage() {
                     {/* Order Items Preview (Expandable or Compact) */}
                     <div style={{ marginBottom: '14px', fontSize: '0.82rem', color: '#475569' }}>
                       <div style={{ fontWeight: 700, marginBottom: '6px', color: '#1e293b' }}>
-                        قائمة المنتجات للتسليم ({order.items?.length || 0}):
+                        {isAr ? `قائمة المنتجات للتسليم (${order.items?.length || 0}):` : `Order items for delivery (${order.items?.length || 0}):`}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         {order.items?.map((it, idx) => (
@@ -814,9 +840,9 @@ export default function DeliveryPortalPage() {
                             }}
                           >
                             <span>
-                              • {it.product?.nameAr || it.product?.name} ({it.product?.brand?.nameAr || ''})
+                              • {isAr ? (it.product?.nameAr || it.product?.name) : (it.product?.name || it.product?.nameAr)} ({isAr ? (it.product?.brand?.nameAr || '') : (it.product?.brand?.name || it.product?.brand?.nameAr || '')})
                             </span>
-                            <span style={{ fontWeight: 700 }}>الكمية: {it.quantity}</span>
+                            <span style={{ fontWeight: 700 }}>{isAr ? 'الكمية:' : 'Qty:'} {it.quantity}</span>
                           </div>
                         ))}
                       </div>
@@ -840,7 +866,9 @@ export default function DeliveryPortalPage() {
                           cursor: actionLoading[order.id] ? 'wait' : 'pointer',
                         }}
                       >
-                        {actionLoading[order.id] ? 'جاري الاستلام...' : '🛵 استلام هذا الطلب والبدء بالتوصيل'}
+                        {actionLoading[order.id]
+                          ? (isAr ? 'جاري الاستلام...' : 'Accepting...')
+                          : (isAr ? '🛵 استلام هذا الطلب والبدء بالتوصيل' : '🛵 Accept & Start Delivery')}
                       </button>
                     )}
 
@@ -854,17 +882,19 @@ export default function DeliveryPortalPage() {
                         }}
                       >
                         <div style={{ fontWeight: 700, color: '#166534', fontSize: '0.88rem', marginBottom: '8px' }}>
-                          🔐 تأكيد التسليم للعميل بكود الاستلام (OTP):
+                          🔐 {isAr ? 'تأكيد التسليم للعميل بكود الاستلام (OTP):' : 'Confirm Delivery with Handover OTP:'}
                         </div>
                         <div style={{ fontSize: '0.78rem', color: '#15803d', marginBottom: '10px' }}>
-                          اطلب من العميل إعطائك كود الاستلام الظاهر في شاشة هاتفه لتأكيد استلامه للطلب رسمياً.
+                          {isAr
+                            ? 'اطلب من العميل إعطائك كود الاستلام الظاهر في شاشة هاتفه لتأكيد استلامه للطلب رسمياً.'
+                            : 'Ask the customer for the delivery code shown on their order screen to confirm handover.'}
                         </div>
 
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                           <input
                             type="text"
                             maxLength={8}
-                            placeholder="كود الاستلام (مثال: 4821)"
+                            placeholder={isAr ? "كود الاستلام (مثال: 4821)" : "Delivery OTP (e.g. 4821)"}
                             value={deliveryCodes[order.id] || ''}
                             onChange={(e) =>
                               setDeliveryCodes((prev) => ({
@@ -902,7 +932,9 @@ export default function DeliveryPortalPage() {
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            {actionLoading[order.id] ? 'جاري التحقق...' : '✅ تأكيد التسليم'}
+                            {actionLoading[order.id]
+                              ? (isAr ? 'جاري التحقق...' : 'Verifying...')
+                              : (isAr ? '✅ تأكيد التسليم' : '✅ Confirm Handover')}
                           </button>
                         </div>
 
@@ -921,7 +953,7 @@ export default function DeliveryPortalPage() {
 
                     {activeTab === 'completed' && (
                       <div style={{ textAlign: 'center', fontSize: '0.82rem', color: '#15803d', fontWeight: 700 }}>
-                        ✅ تم تسليم الطلب بنجاح للعميل
+                        {isAr ? '✅ تم تسليم الطلب بنجاح للعميل' : '✅ Order successfully delivered to customer'}
                       </div>
                     )}
                   </div>

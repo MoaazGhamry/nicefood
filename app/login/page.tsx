@@ -374,7 +374,7 @@ function LoginFormContent() {
                 rel="noopener noreferrer"
                 style={{ color: '#16a34a', fontWeight: 600, textDecoration: 'none' }}
               >
-                واتساب 01558580214
+                {locale === 'ar' ? 'واتساب 01558580214' : 'WhatsApp 01558580214'}
               </a>
             </span>
           </div>
@@ -386,7 +386,7 @@ function LoginFormContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '60px', textAlign: 'center' }}>جاري التحميل...</div>}>
+    <Suspense fallback={<div style={{ padding: '60px', textAlign: 'center' }}>Loading...</div>}>
       <LoginFormContent />
     </Suspense>
   );

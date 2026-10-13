@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLocale } from '@/lib/locale-context';
 
 interface ProductReviewBoxProps {
   orderId: string;
@@ -21,6 +22,9 @@ export default function ProductReviewBox({
   customerPhone,
   userId,
 }: ProductReviewBoxProps) {
+  const { locale } = useLocale();
+  const isAr = locale === 'ar';
+
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comment, setComment] = useState('');
@@ -80,7 +84,7 @@ export default function ProductReviewBox({
           productId,
           rating,
           comment,
-          customerName: customerName || 'عميل نايس فود',
+          customerName: customerName || (isAr ? 'عميل نايس فود' : 'NiceFood Customer'),
           customerPhone,
           userId,
         }),
@@ -88,15 +92,19 @@ export default function ProductReviewBox({
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'فشل إرسال التقييم');
+        throw new Error(data.error || (isAr ? 'فشل إرسال التقييم' : 'Failed to submit review'));
       }
 
       setExistingReview(data.review);
       setIsEditing(false);
-      setSuccessMsg('تم حفظ تقييمك بنجاح! شكراً لمشاركتك رأيك 🌟');
+      setSuccessMsg(
+        isAr
+          ? 'تم حفظ تقييمك بنجاح! شكراً لمشاركتك رأيك 🌟'
+          : 'Your review was saved successfully! Thank you for your feedback 🌟'
+      );
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err: any) {
-      setErrorMsg(err.message || 'حدث خطأ أثناء حفظ التقييم');
+      setErrorMsg(err.message || (isAr ? 'حدث خطأ أثناء حفظ التقييم' : 'An error occurred'));
     } finally {
       setLoading(false);
     }
@@ -105,15 +113,15 @@ export default function ProductReviewBox({
   const getRatingLabel = (val: number) => {
     switch (val) {
       case 5:
-        return 'ممتاز ولذيذ جداً 🌟';
+        return isAr ? 'ممتاز ولذيذ جداً 🌟' : 'Excellent & Delicious 🌟';
       case 4:
-        return 'جيد جداً 👍';
+        return isAr ? 'جيد جداً 👍' : 'Very Good 👍';
       case 3:
-        return 'جيد وطيب 😊';
+        return isAr ? 'جيد وطيب 😊' : 'Good 😊';
       case 2:
-        return 'مقبول 😐';
+        return isAr ? 'مقبول 😐' : 'Fair 😐';
       case 1:
-        return 'يحتاج تحسين ⚠️';
+        return isAr ? 'يحتاج تحسين ⚠️' : 'Needs Improvement ⚠️';
       default:
         return '';
     }
@@ -143,7 +151,9 @@ export default function ProductReviewBox({
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ color: '#854d0e', fontWeight: 700 }}>تقييمك للمنتج:</span>
+            <span style={{ color: '#854d0e', fontWeight: 700 }}>
+              {isAr ? 'تقييمك للمنتج:' : 'Your Rating:'}
+            </span>
             <span style={{ color: '#eab308', fontSize: '1rem', letterSpacing: '2px' }}>
               {'★'.repeat(existingReview.rating)}
               {'☆'.repeat(5 - existingReview.rating)}
@@ -171,7 +181,7 @@ export default function ProductReviewBox({
             cursor: 'pointer',
           }}
         >
-          تعديل التقييم
+          {isAr ? 'تعديل التقييم' : 'Edit Review'}
         </button>
       </div>
     );
@@ -191,7 +201,7 @@ export default function ProductReviewBox({
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
         <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1e293b' }}>
-          ⭐ قيم جودة هذا المنتج بعد التوصيل:
+          {isAr ? '⭐ قيم جودة هذا المنتج بعد التوصيل:' : '⭐ Rate this product after delivery:'}
         </span>
         {isEditing && (
           <button
@@ -206,7 +216,7 @@ export default function ProductReviewBox({
               textDecoration: 'underline',
             }}
           >
-            إلغاء
+            {isAr ? 'إلغاء' : 'Cancel'}
           </button>
         )}
       </div>
@@ -235,7 +245,7 @@ export default function ProductReviewBox({
                     transition: 'transform 0.15s ease',
                     transform: active ? 'scale(1.1)' : 'scale(1)',
                   }}
-                  title={`${star} نجوم`}
+                  title={`${star} stars`}
                 >
                   ★
                 </button>
@@ -251,7 +261,11 @@ export default function ProductReviewBox({
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <input
             type="text"
-            placeholder="اكتب تعليقك حول الطعم والجودة (اختياري)..."
+            placeholder={
+              isAr
+                ? 'اكتب تعليقك حول الطعم والجودة (اختياري)...'
+                : 'Write your feedback on taste & quality (optional)...'
+            }
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             style={{
@@ -280,7 +294,9 @@ export default function ProductReviewBox({
               whiteSpace: 'nowrap',
             }}
           >
-            {loading ? 'جاري الحفظ...' : 'إرسال التقييم'}
+            {loading
+              ? (isAr ? 'جاري الحفظ...' : 'Saving...')
+              : (isAr ? 'إرسال التقييم' : 'Submit')}
           </button>
         </div>
 

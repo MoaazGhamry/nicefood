@@ -583,11 +583,21 @@ export default function CheckoutPage() {
                         fontSize: '0.92rem',
                       }}
                     >
-                      <option value="العاشر من رمضان">العاشر من رمضان (المنطقة الصناعية والأحياء)</option>
-                      <option value="القاهرة الكبرى">القاهرة الكبرى (التجمع، مدينة نصر، الشروق، المعادي)</option>
-                      <option value="الجيزة">الجيزة (الشيخ زايد، 6 أكتوبر، الدقي)</option>
-                      <option value="الشرقية">الشرقية (الزقازيق، بلبيس)</option>
-                      <option value="محافظة أخرى">محافظة أخرى</option>
+                      <option value="العاشر من رمضان">
+                        {locale === 'ar' ? 'العاشر من رمضان (المنطقة الصناعية والأحياء)' : '10th of Ramadan City (Industrial & Residential)'}
+                      </option>
+                      <option value="القاهرة الكبرى">
+                        {locale === 'ar' ? 'القاهرة الكبرى (التجمع، مدينة نصر، الشروق، المعادي)' : 'Greater Cairo (New Cairo, Nasr City, Maadi, Shorouk)'}
+                      </option>
+                      <option value="الجيزة">
+                        {locale === 'ar' ? 'الجيزة (الشيخ زايد، 6 أكتوبر، الدقي)' : 'Giza (Sheikh Zayed, 6th October, Dokki)'}
+                      </option>
+                      <option value="الشرقية">
+                        {locale === 'ar' ? 'الشرقية (الزقازيق، بلبيس)' : 'Sharqia (Zagazig, Bilbeis)'}
+                      </option>
+                      <option value="محافظة أخرى">
+                        {locale === 'ar' ? 'محافظة أخرى' : 'Other Governorate'}
+                      </option>
                     </select>
                   </div>
 
@@ -632,7 +642,7 @@ export default function CheckoutPage() {
                       }}
                     >
                       <option value="أسرع وقت ممكن (خلال ساعتين)">
-                        {locale === 'ar' ? 'أسرع وقت ممكن (خلال 2-4 ساعات)' : 'As soon as possible'}
+                        {locale === 'ar' ? 'أسرع وقت ممكن (خلال 2-4 ساعات)' : 'As soon as possible (2-4 hours)'}
                       </option>
                       <option value="الفترة الصباحية (10 صباحاً - 2 ظهراً)">
                         {locale === 'ar' ? 'الفترة الصباحية (10 ص - 2 ظ)' : 'Morning (10 AM - 2 PM)'}
@@ -736,10 +746,12 @@ export default function CheckoutPage() {
                     }}
                   >
                     <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                      بوابة Paymob المعتمدة:
+                      {locale === 'ar' ? 'بوابة Paymob المعتمدة:' : 'Secure Paymob Gateway:'}
                     </div>
                     <div>
-                      سيتم فتح نافذة الدفع الآمنة لـ Paymob لإتمام العملية باستخدام بطاقة فيزا أو ماستركارد أو ميزة وتأكيد الطلب تلقائياً فور نجاح الدفع.
+                      {locale === 'ar'
+                        ? 'سيتم فتح نافذة الدفع الآمنة لـ Paymob لإتمام العملية باستخدام بطاقة فيزا أو ماستركارد أو ميزة وتأكيد الطلب تلقائياً فور نجاح الدفع.'
+                        : 'A secure Paymob window will open to pay using Visa, Mastercard, or Meeza with instant automatic confirmation upon success.'}
                     </div>
                   </div>
                 )}
@@ -755,7 +767,9 @@ export default function CheckoutPage() {
                     }}
                   >
                     <div style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: '6px' }}>
-                      رقم إنستاباي والمحافظ الإلكترونية (فودافون كاش / أورنج / وي / اتصالات):
+                      {locale === 'ar'
+                        ? 'رقم إنستاباي والمحافظ الإلكترونية (فودافون كاش / أورنج / وي / اتصالات):'
+                        : 'InstaPay & Mobile Wallets Number (Vodafone Cash / Orange / We / Etisalat):'}
                     </div>
                     <div
                       style={{
@@ -776,7 +790,7 @@ export default function CheckoutPage() {
                         type="button"
                         onClick={() => {
                           navigator.clipboard.writeText('01558580214');
-                          alert('تم نسخ رقم المحفظة / إنستاباي بنجاح: 01558580214');
+                          alert(locale === 'ar' ? 'تم نسخ رقم المحفظة / إنستاباي بنجاح: 01558580214' : 'Wallet / InstaPay number copied: 01558580214');
                         }}
                         style={{
                           padding: '6px 12px',
@@ -789,11 +803,19 @@ export default function CheckoutPage() {
                           color: 'var(--text-primary)',
                         }}
                       >
-                        نسخ الرقم 📋
+                        {locale === 'ar' ? 'نسخ الرقم 📋' : 'Copy Number 📋'}
                       </button>
                     </div>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: 1.6 }}>
-                      ⚠️ <strong>ملاحظة هامة:</strong> قم بتحويل المبلغ ({grandTotal} ج.م) للرقم أعلاه. بعد الضغط على &quot;تأكيد الطلب&quot;، سيُطلب منك إرسال لقطة شاشة (سكرين شوت) بالتحويل عبر واتساب لمراجعتها واعتماد الطلب من الإدارة.
+                      {locale === 'ar' ? (
+                        <>
+                          ⚠️ <strong>ملاحظة هامة:</strong> قم بتحويل المبلغ ({grandTotal} ج.م) للرقم أعلاه. بعد الضغط على &quot;تأكيد الطلب&quot;، سيُطلب منك إرسال لقطة شاشة (سكرين شوت) بالتحويل عبر واتساب لمراجعتها واعتماد الطلب من الإدارة.
+                        </>
+                      ) : (
+                        <>
+                          ⚠️ <strong>Important Note:</strong> Please transfer the total amount ({grandTotal} EGP) to the number above. After clicking &quot;Confirm Order&quot;, you will be asked to send a transfer screenshot via WhatsApp to verify and approve your order.
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -864,11 +886,11 @@ export default function CheckoutPage() {
                         {locale === 'ar' ? item.nameAr : item.name}
                       </div>
                       <div style={{ color: 'var(--text-muted)', fontSize: '0.76rem' }}>
-                        {item.quantity} × {item.offerPrice || item.price} ج.م
+                        {item.quantity} × {item.offerPrice || item.price} {locale === 'ar' ? 'ج.م' : 'EGP'}
                       </div>
                     </div>
                     <div style={{ fontWeight: 700, color: 'var(--nicefood-gold)' }}>
-                      {(item.offerPrice || item.price) * item.quantity} ج.م
+                      {(item.offerPrice || item.price) * item.quantity} {locale === 'ar' ? 'ج.م' : 'EGP'}
                     </div>
                   </div>
                 ))}
@@ -878,12 +900,12 @@ export default function CheckoutPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
                   <span>{locale === 'ar' ? 'المجموع الفرعي' : 'Subtotal'}</span>
-                  <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{total} ج.م</span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{total} {locale === 'ar' ? 'ج.م' : 'EGP'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
                   <span>{locale === 'ar' ? 'مصاريف الشحن' : 'Delivery Fee'}</span>
                   <span style={{ color: deliveryFee === 0 ? 'var(--nicefood-green)' : 'var(--text-primary)', fontWeight: 600 }}>
-                    {deliveryFee === 0 ? (locale === 'ar' ? 'مجاني' : 'Free') : `${deliveryFee} ج.م`}
+                    {deliveryFee === 0 ? (locale === 'ar' ? 'مجاني' : 'Free') : `${deliveryFee} ${locale === 'ar' ? 'ج.م' : 'EGP'}`}
                   </span>
                 </div>
                 <div style={{ height: '1px', background: 'var(--border-color)', margin: '4px 0' }} />
@@ -892,7 +914,7 @@ export default function CheckoutPage() {
                     {locale === 'ar' ? 'الإجمالي المطلوب' : 'Total'}
                   </span>
                   <span style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--nicefood-gold)' }}>
-                    {grandTotal} <span style={{ fontSize: '0.85rem' }}>ج.م</span>
+                    {grandTotal} <span style={{ fontSize: '0.85rem' }}>{locale === 'ar' ? 'ج.م' : 'EGP'}</span>
                   </span>
                 </div>
               </div>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from '@/lib/locale-context';
 
 interface CancelOrderButtonProps {
   orderId: string;
@@ -10,8 +11,11 @@ interface CancelOrderButtonProps {
 
 export default function CancelOrderButton({ orderId, currentStatus }: CancelOrderButtonProps) {
   const router = useRouter();
+  const { locale } = useLocale();
   const [loading, setLoading] = useState(false);
   const [cancelled, setCancelled] = useState(currentStatus === 'cancelled');
+
+  const isAr = locale === 'ar';
 
   if (cancelled) {
     return (
@@ -28,13 +32,17 @@ export default function CancelOrderButton({ orderId, currentStatus }: CancelOrde
           marginTop: '10px',
         }}
       >
-        تم إلغاء هذا الطلب بنجاح بناءً على رغبتك
+        {isAr ? 'تم إلغاء هذا الطلب بنجاح بناءً على رغبتك' : 'This order has been successfully cancelled'}
       </div>
     );
   }
 
   const handleCancel = async () => {
-    const confirmed = window.confirm('هل أنت متأكد من رغبتك في إلغاء هذا الطلب نهائياً؟');
+    const confirmed = window.confirm(
+      isAr
+        ? 'هل أنت متأكد من رغبتك في إلغاء هذا الطلب نهائياً؟'
+        : 'Are you sure you want to permanently cancel this order?'
+    );
     if (!confirmed) return;
 
     setLoading(true);
@@ -52,11 +60,15 @@ export default function CancelOrderButton({ orderId, currentStatus }: CancelOrde
         setCancelled(true);
         router.refresh();
       } else {
-        alert('حدث خطأ أثناء محاولة إلغاء الطلب، يرجى التواصل مع خدمة العملاء');
+        alert(
+          isAr
+            ? 'حدث خطأ أثناء محاولة إلغاء الطلب، يرجى التواصل مع خدمة العملاء'
+            : 'Could not cancel order. Please contact customer support.'
+        );
       }
     } catch (err) {
       console.error(err);
-      alert('فشل الاتصال بالخادم لإلغاء الطلب');
+      alert(isAr ? 'فشل الاتصال بالخادم لإلغاء الطلب' : 'Failed to connect to server');
     } finally {
       setLoading(false);
     }
@@ -88,7 +100,11 @@ export default function CancelOrderButton({ orderId, currentStatus }: CancelOrde
         <line x1="15" y1="9" x2="9" y2="15" />
         <line x1="9" y1="9" x2="15" y2="15" />
       </svg>
-      <span>{loading ? 'جاري إلغاء الطلب...' : 'إلغاء هذا الطلب نهائياً'}</span>
+      <span>
+        {loading
+          ? (isAr ? 'جاري إلغاء الطلب...' : 'Cancelling...')
+          : (isAr ? 'إلغاء هذا الطلب نهائياً' : 'Cancel This Order')}
+      </span>
     </button>
   );
 }
