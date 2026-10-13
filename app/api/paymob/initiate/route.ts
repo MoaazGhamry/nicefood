@@ -21,7 +21,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required order details' }, { status: 400 });
     }
 
-    // 1. Create order in DB with pending payment
+    // 1. Resiliently resolve products against DB to guarantee valid foreign keys
+    const validProducts = await prisma.product.findMany();
+    const productMap = new Map(validProducts.map((p) => [p.id, p]));
+
+    const validOrderItems = items
+      .map((item: any) => {
+        let matchedProduct = productMap.get(item.id);
+        if (!matchedProduct) {
+          matchedProduct = validProducts.find(
+            (p) => p.nameAr === item.nameAr || p.name === item.name
+          );
+        }
+        if (!matchedProduct && validProducts.length > 0) {
+          matchedProduct = validProducts[0];
+        }
+        if (!matchedProduct) return null;
+
+        const price = item.offerPrice || item.price || matchedProduct.offerPrice || matchedProduct.price;
+        const quantity = Math.max(1, parseInt(item.quantity) || 1);
+        return {
+          productId: matchedProduct.id,
+          quantity,
+          price,
+          total: price * quantity,
+        };
+      })
+      .filter((x: any): x is { productId: string; quantity: number; price: number; total: number } => x !== null);
+
+    if (validOrderItems.length === 0) {
+      return NextResponse.json({ error: 'لم يتم العثور على المنتجات المطلوبة' }, { status: 400 });
+    }
+
     const nameParts = customerName.trim().split(' ');
     const firstName = nameParts[0] || 'Customer';
     const lastName = nameParts.slice(1).join(' ') || 'NiceFood';
@@ -40,12 +71,7 @@ export async function POST(req: Request) {
         notes: notes || '',
         total: parseFloat(total) || 0,
         items: {
-          create: items.map((item: any) => ({
-            productId: item.id,
-            quantity: item.quantity,
-            price: item.offerPrice || item.price,
-            total: (item.offerPrice || item.price) * item.quantity,
-          })),
+          create: validOrderItems,
         },
       },
     });

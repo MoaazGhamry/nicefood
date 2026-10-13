@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="nfBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00873a" />
+      <stop offset="100%" stop-color="#005423" />
+    </linearGradient>
+    <linearGradient id="nfLeaf1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a3e635" />
+      <stop offset="100%" stop-color="#65a30d" />
+    </linearGradient>
+    <linearGradient id="nfLeaf2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#bef264" />
+      <stop offset="100%" stop-color="#4d7c0f" />
+    </linearGradient>
+    <filter id="nfGlow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base with high-contrast dual border -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#nfBg)" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.3" filter="url(#nfGlow)" />
+  <rect x="4.5" y="4.5" width="55" height="55" rx="13.5" fill="none" stroke="#84cc16" stroke-width="1" stroke-opacity="0.35" />
+
+  <!-- NiceFood Twin Fresh Leaves Emblem -->
+  <g transform="translate(15, 7) scale(0.54)">
+    <!-- Back Leaf -->
+    <path d="M26 4 C10 12 5 28 8 46 C16 48 35 45 43 32 C47 18 37 7 26 4 Z" fill="url(#nfLeaf2)" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M11 40 Q 22 28 29 13" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+
+    <!-- Front Leaf -->
+    <path d="M41 11 C26 15 20 33 25 51 C35 53 53 47 59 34 C63 22 51 13 41 11 Z" fill="url(#nfLeaf1)" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M28 45 Q 37 32 45 19" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.75"/>
+  </g>
+
+  <!-- Modern bold NiceFood "NF" monogram with subtle bottom accent -->
+  <text x="32" y="52" font-family="-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">NF</text>
+  <circle cx="32" cy="56.5" r="1.5" fill="#a3e635" />
+</svg>

@@ -9,7 +9,15 @@ export const metadata: Metadata = {
   title: "NiceFood | مجموعة نايس فود للمنتجات الغذائية - طعموش، ابن الأصول، مزايا",
   description: "الموقع الرسمي لمجموعة مصانع نايس فود للمنتجات الغذائية: طعموش للدواجن والمجمدات، ابن الأصول للمصنعات الشرقية، مزايا للّانشون والسوسيس. تسوق الآن أونلاين بالفيزا أو كاش مع التوصيل.",
   icons: {
-    icon: "/images/brands/nicefood-logo.jpeg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/images/brands/nicefood-logo.jpeg", sizes: "any" },
+    ],
+    apple: [
+      { url: "/apple-icon.svg", type: "image/svg+xml" },
+      { url: "/images/brands/nicefood-logo.jpeg" },
+    ],
+    shortcut: "/favicon.svg",
   },
 };
 
