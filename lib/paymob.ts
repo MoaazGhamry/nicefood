@@ -71,7 +71,23 @@ export async function initiatePaymobPayment({
       const orderData = await orderRes.json();
       const paymobOrderId = orderData.id;
 
-      // 3. Payment Key Request
+      // 3. Payment Key Request with guaranteed billing_data defaults
+      const completeBillingData = {
+        apartment: billingData.apartment || 'NA',
+        floor: billingData.floor || 'NA',
+        building: billingData.building || 'NA',
+        street: billingData.street || 'El Asher',
+        postal_code: billingData.postal_code || 'NA',
+        city: billingData.city || 'Cairo',
+        country: billingData.country || 'EG',
+        state: billingData.state || 'Cairo',
+        first_name: billingData.first_name || 'Customer',
+        last_name: billingData.last_name || 'NiceFood',
+        email: billingData.email || 'customer@nicefood.com',
+        phone_number: billingData.phone_number || '01000000000',
+        shipping_method: 'PKG',
+      };
+
       const keyRes = await fetch('https://accept.paymob.com/api/acceptance/payment_keys', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,7 +96,7 @@ export async function initiatePaymobPayment({
           amount_cents: amountCents.toString(),
           expiration: 3600,
           order_id: paymobOrderId,
-          billing_data: billingData,
+          billing_data: completeBillingData,
           currency: 'EGP',
           integration_id: Number(integrationId),
         }),
