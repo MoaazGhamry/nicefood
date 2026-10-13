@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/lib/cart-context';
@@ -34,6 +34,21 @@ export default function CheckoutPage() {
 
   const deliveryFee = total > 500 || total === 0 ? 0 : 35;
   const grandTotal = total + deliveryFee;
+
+  // If user backed out or returned from Paymob without finishing payment -> cancel order immediately!
+  useEffect(() => {
+    const pendingOrderId = sessionStorage.getItem('nicefood_pending_paymob_order');
+    if (pendingOrderId) {
+      sessionStorage.removeItem('nicefood_pending_paymob_order');
+      fetch(`/api/orders/${pendingOrderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderStatus: 'cancelled', paymentStatus: 'failed' }),
+      }).catch(console.error);
+
+      router.push(`/payment/failed?orderId=${pendingOrderId}&reason=user_returned`);
+    }
+  }, [router]);
 
   // Real Auto-detect location using Geolocation + Reverse Geocoding
   const handleAutoDetectLocation = () => {
@@ -146,6 +161,7 @@ export default function CheckoutPage() {
 
         // If Paymob returned an iframe URL redirect to it, otherwise to confirmation
         if (payData.paymentUrl) {
+          sessionStorage.setItem('nicefood_pending_paymob_order', payData.orderId);
           window.location.href = payData.paymentUrl;
         } else {
           clearCart();
@@ -593,20 +609,52 @@ export default function CheckoutPage() {
                   <div
                     style={{
                       background: 'var(--bg-secondary)',
-                      padding: '14px 16px',
+                      padding: '16px',
                       borderRadius: 'var(--radius-sm, 8px)',
-                      border: '1px solid var(--border-color)',
-                      fontSize: '0.84rem',
+                      border: '1.5px solid var(--nicefood-gold)',
+                      fontSize: '0.85rem',
                     }}
                   >
-                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                      رقم محفظة فودافون كاش / إنستاباي الخاصة بالمصنع:
+                    <div style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: '6px' }}>
+                      رقم إنستاباي والمحافظ الإلكترونية (فودافون كاش / أورنج / وي / اتصالات):
                     </div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--nicefood-gold)', direction: 'ltr', textAlign: 'left', margin: '4px 0' }}>
-                      01019000000
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        background: 'var(--bg-card)',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        margin: '8px 0',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--nicefood-green)', direction: 'ltr', letterSpacing: '1px' }}>
+                        01558580214
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText('01558580214');
+                          alert('تم نسخ رقم المحفظة / إنستاباي بنجاح: 01558580214');
+                        }}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        نسخ الرقم 📋
+                      </button>
                     </div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
-                      برجاء تحويل المبلغ المطلوب ({grandTotal} ج.م) والاحتفاظ برقم العملية، وسيتم تأكيد الطلب فوراً.
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: 1.6 }}>
+                      ⚠️ <strong>ملاحظة هامة:</strong> قم بتحويل المبلغ ({grandTotal} ج.م) للرقم أعلاه. بعد الضغط على &quot;تأكيد الطلب&quot;، سيُطلب منك إرسال لقطة شاشة (سكرين شوت) بالتحويل عبر واتساب لمراجعتها واعتماد الطلب من الإدارة.
                     </div>
                   </div>
                 )}

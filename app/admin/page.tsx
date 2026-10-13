@@ -88,7 +88,7 @@ export default function AdminDashboardPage() {
   const [newImage, setNewImage] = useState('');
   const [savingProduct, setSavingProduct] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState('');
-  const [orderFilter, setOrderFilter] = useState<'all' | 'pending' | 'preparing' | 'cancelled'>('all');
+  const [orderFilter, setOrderFilter] = useState<'all' | 'pending' | 'wallet_pending' | 'preparing' | 'cancelled'>('all');
 
   // Check secret session on mount
   useEffect(() => {
@@ -322,6 +322,69 @@ export default function AdminDashboardPage() {
       console.error(err);
       alert('فشل الاتصال لحذف الطلب');
     }
+  };
+
+  // Approve order & automatically send WhatsApp confirmation to customer
+  const handleApproveOrder = async (order: any) => {
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderStatus: 'confirmed', paymentStatus: 'paid' }),
+      });
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === order.id ? { ...o, orderStatus: 'confirmed', paymentStatus: 'paid' } : o))
+        );
+        showFeedback('تمت الموافقة على الطلب بنجاح');
+
+        // Automatically open WhatsApp message to the customer
+        const cleanPhone = order.customerPhone.replace(/[^0-9]/g, '');
+        const formattedPhone = cleanPhone.startsWith('0')
+          ? '2' + cleanPhone
+          : cleanPhone.startsWith('20')
+          ? cleanPhone
+          : '20' + cleanPhone;
+
+        const confirmMsg = encodeURIComponent(
+          `مرحباً ${order.customerName}،\nتمت مراجعة تحويلك والموافقة على طلبك رقم #${order.id.slice(-6).toUpperCase()} بنجاح من مجموعة مصانع NiceFood! ✅\n\nقيمة الطلب: ${order.total} ج.م\nالعنوان: ${order.customerAddress}\nالحالة الحالية: مؤكد وجاري التجهيز في خطوط الإنتاج للتوصيل فوراً.\n\nشكراً لطلبك من نايس فود!`
+        );
+
+        const waUrl = `https://wa.me/${formattedPhone}?text=${confirmMsg}`;
+        window.open(waUrl, '_blank');
+      } else {
+        alert('حدث خطأ أثناء الموافقة على الطلب');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('فشل الاتصال لتحديث الطلب');
+    }
+  };
+
+  // Manual WhatsApp notification
+  const handleSendWhatsAppNotification = (order: any) => {
+    const cleanPhone = order.customerPhone.replace(/[^0-9]/g, '');
+    const formattedPhone = cleanPhone.startsWith('0')
+      ? '2' + cleanPhone
+      : cleanPhone.startsWith('20')
+      ? cleanPhone
+      : '20' + cleanPhone;
+
+    const msg = encodeURIComponent(
+      `مرحباً ${order.customerName}،\nبخصوص طلبك رقم #${order.id.slice(-6).toUpperCase()} من مجموعة مصانع NiceFood:\nالحالة الحالية: ${
+        order.orderStatus === 'confirmed'
+          ? 'تم تأكيد الطلب وجاري تجهيزه بالمصنع'
+          : order.orderStatus === 'preparing'
+          ? 'جاري التجهيز في خط الإنتاج'
+          : order.orderStatus === 'delivering'
+          ? 'الطلب مع مندوب التوصيل في الطريق إليك'
+          : order.orderStatus === 'delivered'
+          ? 'تم تسليم الطلب بنجاح'
+          : 'قيد الانتظار'
+      }\nالإجمالي: ${order.total} ج.م\nشكراً لتواصلك معنا!`
+    );
+
+    window.open(`https://wa.me/${formattedPhone}?text=${msg}`, '_blank');
   };
 
   // Add Product Submit
@@ -1002,6 +1065,22 @@ export default function AdminDashboardPage() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setOrderFilter('wallet_pending')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: orderFilter === 'wallet_pending' ? '#d97706' : 'var(--bg-card)',
+                    color: orderFilter === 'wallet_pending' ? '#fff' : 'var(--text-primary)',
+                    fontWeight: 600,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ⚠️ بانتظار موافقة التحويل ({orders.filter((o) => o.paymentMethod === 'wallet' && o.orderStatus === 'pending').length})
+                </button>
+                <button
+                  type="button"
                   onClick={() => setOrderFilter('preparing')}
                   style={{
                     padding: '8px 16px',
@@ -1077,6 +1156,8 @@ export default function AdminDashboardPage() {
                     {orders
                       .filter((ord) => {
                         if (orderFilter === 'pending') return ord.orderStatus === 'pending';
+                        if (orderFilter === 'wallet_pending')
+                          return ord.paymentMethod === 'wallet' && ord.orderStatus === 'pending';
                         if (orderFilter === 'preparing')
                           return (
                             ord.orderStatus === 'preparing' ||
@@ -1092,8 +1173,11 @@ export default function AdminDashboardPage() {
                             ? `https://www.google.com/maps?q=${ord.customerLat},${ord.customerLng}`
                             : null;
 
+                        const isWalletNeedApproval =
+                          ord.paymentMethod === 'wallet' && ord.orderStatus === 'pending';
+
                         return (
-                          <tr key={ord.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                          <tr key={ord.id} style={{ borderBottom: '1px solid var(--border-color)', background: isWalletNeedApproval ? 'rgba(254, 243, 199, 0.25)' : undefined }}>
                             <td style={{ padding: '12px 14px' }}>
                               <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
                                 #{ord.id.slice(-6).toUpperCase()}
@@ -1161,9 +1245,28 @@ export default function AdminDashboardPage() {
                                     ? 'Paymob فيزا (مدفوع)'
                                     : 'Paymob فيزا (ملغي/فشل)'
                                   : ord.paymentMethod === 'wallet'
-                                  ? 'محفظة'
+                                  ? ord.paymentStatus === 'paid'
+                                    ? 'إنستاباي / محفظة (معتمد)'
+                                    : 'إنستاباي / محفظة (بانتظار التحويل)'
                                   : 'كاش استلام'}
                               </div>
+                              {isWalletNeedApproval && (
+                                <div
+                                  style={{
+                                    display: 'inline-block',
+                                    background: '#fef3c7',
+                                    color: '#b45309',
+                                    border: '1px solid #fcd34d',
+                                    padding: '2px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.68rem',
+                                    fontWeight: 700,
+                                    marginTop: '4px',
+                                  }}
+                                >
+                                  ⚠️ محتاج موافقة
+                                </div>
+                              )}
                             </td>
 
                             <td style={{ padding: '12px 14px' }}>
@@ -1181,6 +1284,7 @@ export default function AdminDashboardPage() {
                                 }}
                               >
                                 <option value="pending">قيد الانتظار</option>
+                                <option value="confirmed">مؤكد</option>
                                 <option value="preparing">جاري التجهيز بالمصنع</option>
                                 <option value="delivering">جاري التوصيل</option>
                                 <option value="delivered">تم التسليم</option>
@@ -1188,16 +1292,57 @@ export default function AdminDashboardPage() {
                               </select>
                             </td>
 
-                            {/* Direct Cancel and Delete Actions */}
+                            {/* Direct Actions: Approve, WhatsApp, Cancel, Delete */}
                             <td style={{ padding: '12px 14px' }}>
-                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                {ord.orderStatus === 'pending' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleApproveOrder(ord)}
+                                    title="الموافقة على الطلب وتأكيده مع إرسال رسالة واتساب أوتوماتيكية للعميل"
+                                    style={{
+                                      padding: '5px 10px',
+                                      borderRadius: '6px',
+                                      background: 'var(--nicefood-green)',
+                                      border: '1px solid var(--nicefood-green)',
+                                      color: '#fff',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      whiteSpace: 'nowrap',
+                                      boxShadow: '0 2px 6px rgba(0, 135, 58, 0.25)',
+                                    }}
+                                  >
+                                    ✓ موافقة وتأكيد
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleSendWhatsAppNotification(ord)}
+                                  title="فتح محادثة واتساب مع العميل برقم الطلب وحالته"
+                                  style={{
+                                    padding: '5px 8px',
+                                    borderRadius: '6px',
+                                    background: '#25D366',
+                                    border: '1px solid #25D366',
+                                    color: '#fff',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  واتساب
+                                </button>
+
                                 {ord.orderStatus !== 'cancelled' ? (
                                   <button
                                     type="button"
                                     onClick={() => handleCancelOrder(ord.id)}
                                     title="إلغاء الطلب فوراً"
                                     style={{
-                                      padding: '5px 10px',
+                                      padding: '5px 8px',
                                       borderRadius: '6px',
                                       background: '#fee2e2',
                                       border: '1px solid #fca5a5',
@@ -1213,23 +1358,24 @@ export default function AdminDashboardPage() {
                                 ) : (
                                   <span style={{ fontSize: '0.72rem', color: '#b91c1c', fontWeight: 600 }}>ملغي</span>
                                 )}
+
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteOrder(ord.id)}
                                   title="حذف نهائي من قاعدة البيانات"
                                   style={{
-                                    padding: '5px 8px',
+                                    padding: '5px 6px',
                                     borderRadius: '6px',
                                     background: '#fff',
                                     border: '1px solid #e2e8f0',
                                     color: '#dc2626',
-                                    fontSize: '0.74rem',
+                                    fontSize: '0.72rem',
                                     fontWeight: 600,
                                     cursor: 'pointer',
                                     whiteSpace: 'nowrap',
                                   }}
                                 >
-                                  حذف نهائي
+                                  حذف
                                 </button>
                               </div>
                             </td>
